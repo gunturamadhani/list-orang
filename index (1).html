@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iMe RP — Player Checker</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --red:#ff3c3c;--orange:#ff8c00;--gold:#ffb300;
+  --bg:#0a0608;--bg2:#110b0d;--bg3:#180d10;
+  --border:#2a1215;--border2:#3d1a1e;
+  --text:#f0d0d5;--text2:#a07880;--text3:#6a4850;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Barlow Condensed',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.03) 2px,rgba(0,0,0,.03) 4px);pointer-events:none;z-index:9999}
+.wrap{max-width:1100px;margin:0 auto;padding:24px 16px}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+.logo{display:flex;align-items:center;gap:14px}
+.logo-icon{width:48px;height:48px;background:linear-gradient(135deg,var(--red),var(--orange));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff;letter-spacing:-1px;position:relative;overflow:hidden}
+.logo-icon::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.15),transparent)}
+.logo-title{font-size:28px;font-weight:800;letter-spacing:2px;color:#fff;line-height:1;text-transform:uppercase}
+.logo-sub{font-size:12px;color:var(--orange);letter-spacing:3px;font-weight:600;text-transform:uppercase}
+.header-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.status-badge{display:flex;align-items:center;gap:7px;background:var(--bg2);border:0.5px solid var(--border2);padding:7px 14px;border-radius:6px;font-size:13px;font-weight:600;letter-spacing:.5px}
+.sdot{width:8px;height:8px;border-radius:50%;background:var(--red);animation:pulse 1.5s infinite}
+.sdot.on{background:#00e676}
+.sdot.off{animation:none}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
+.rbtn{background:linear-gradient(135deg,var(--red),var(--orange));border:none;color:#fff;padding:9px 20px;border-radius:6px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:1px;text-transform:uppercase;display:flex;align-items:center;gap:7px;transition:opacity .15s;box-shadow:0 0 20px rgba(255,60,60,.2)}
+.rbtn:hover{opacity:.85}
+.rbtn:disabled{opacity:.4;cursor:not-allowed}
+.spin{animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.divider{height:1px;background:linear-gradient(90deg,transparent,var(--red),var(--orange),transparent);margin-bottom:20px;opacity:.4}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+@media(max-width:640px){.stats{grid-template-columns:repeat(2,1fr)}}
+.stat{background:var(--bg2);border:0.5px solid var(--border2);border-radius:10px;padding:16px;position:relative;overflow:hidden}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--red),var(--orange))}
+.stat-label{font-size:11px;color:var(--text2);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;font-weight:600}
+.stat-val{font-size:32px;font-weight:800;color:#fff;line-height:1;letter-spacing:-1px}
+.stat-val.red{color:var(--red)}
+.stat-val.ora{color:var(--orange)}
+.stat-val.gld{color:var(--gold)}
+.stat-sub{font-size:11px;color:var(--text3);margin-top:4px;font-family:'Share Tech Mono',monospace}
+.fill-bar{height:3px;background:var(--border);border-radius:2px;margin-top:10px;overflow:hidden}
+.fill-inner{height:100%;background:linear-gradient(90deg,var(--red),var(--orange));border-radius:2px;transition:width .8s cubic-bezier(.4,0,.2,1)}
+.tabs{display:flex;gap:4px;margin-bottom:16px;background:var(--bg2);border:0.5px solid var(--border2);padding:4px;border-radius:8px;width:fit-content}
+.tab{padding:8px 20px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text2);transition:all .15s;border:none;background:transparent;font-family:'Barlow Condensed',sans-serif}
+.tab.active{background:linear-gradient(135deg,var(--red),var(--orange));color:#fff;box-shadow:0 0 15px rgba(255,60,60,.3)}
+.tab:hover:not(.active){color:var(--text)}
+.controls{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.search-wrap{flex:1;min-width:200px;position:relative}
+.search-wrap input{width:100%;background:var(--bg2);border:0.5px solid var(--border2);color:var(--text);padding:10px 14px 10px 38px;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:500}
+.search-wrap input::placeholder{color:var(--text3)}
+.search-wrap input:focus{outline:none;border-color:var(--red)}
+.search-ico{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none;font-size:15px}
+.ctrl-select{background:var(--bg2);border:0.5px solid var(--border2);color:var(--text);padding:10px 12px;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:600}
+.view-toggle{display:flex;gap:4px;background:var(--bg2);border:0.5px solid var(--border2);padding:4px;border-radius:8px}
+.vbtn{width:34px;height:34px;border:none;background:transparent;color:var(--text2);cursor:pointer;border-radius:5px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.vbtn.active{background:linear-gradient(135deg,var(--red),var(--orange));color:#fff}
+.count-badge{background:var(--bg2);border:0.5px solid var(--border2);padding:8px 14px;border-radius:8px;font-size:13px;font-weight:700;color:var(--text2);letter-spacing:.5px;white-space:nowrap}
+.count-badge span{color:var(--orange)}
+.table-wrap{background:var(--bg2);border:0.5px solid var(--border2);border-radius:10px;overflow:hidden}
+.thead{display:grid;grid-template-columns:64px 1fr 120px 90px;gap:8px;padding:10px 16px;font-size:10px;letter-spacing:1.5px;color:var(--text2);text-transform:uppercase;font-weight:700;border-bottom:0.5px solid var(--border2);background:var(--bg3)}
+.plist{max-height:440px;overflow-y:auto}
+.plist::-webkit-scrollbar{width:4px}
+.plist::-webkit-scrollbar-thumb{background:var(--red);border-radius:2px}
+.prow{display:grid;grid-template-columns:64px 1fr 120px 90px;gap:8px;padding:10px 16px;align-items:center;border-bottom:0.5px solid var(--border);transition:background .1s}
+.prow:last-child{border-bottom:none}
+.prow:hover{background:var(--bg3)}
+.pid{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--text3)}
+.ppfx{font-size:11px;color:var(--orange);font-weight:700;letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
+.pname{font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pping{display:flex;align-items:center;justify-content:center;gap:5px;font-family:'Share Tech Mono',monospace;font-size:12px}
+.pingdot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.pg{color:#00e676}.pingdot.g{background:#00e676}
+.py{color:#ffc107}.pingdot.y{background:#ffc107}
+.pr2{color:var(--red)}.pingdot.r{background:var(--red)}
+.copy-btn{background:var(--bg3);border:0.5px solid var(--border2);color:var(--text2);padding:4px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:700;letter-spacing:.5px;transition:all .15s;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase}
+.copy-btn:hover{border-color:var(--orange);color:var(--orange)}
+.copy-btn.copied{border-color:#00e676;color:#00e676}
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;max-height:480px;overflow-y:auto;padding-right:4px}
+.card-grid::-webkit-scrollbar{width:4px}
+.card-grid::-webkit-scrollbar-thumb{background:var(--red);border-radius:2px}
+.pcard{background:var(--bg2);border:0.5px solid var(--border2);border-radius:10px;padding:14px;position:relative;overflow:hidden;transition:border-color .15s,transform .15s}
+.pcard:hover{border-color:var(--red);transform:translateY(-2px)}
+.pcard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--red),var(--orange));opacity:0;transition:opacity .15s}
+.pcard:hover::before{opacity:1}
+.card-id{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);margin-bottom:4px}
+.card-pfx{font-size:11px;color:var(--orange);font-weight:700;letter-spacing:.5px;margin-bottom:2px}
+.card-name{font-size:14px;font-weight:700;color:var(--text);margin-bottom:10px;line-height:1.3}
+.card-footer{display:flex;align-items:center;justify-content:space-between}
+.card-ping{display:flex;align-items:center;gap:4px;font-family:'Share Tech Mono',monospace;font-size:12px}
+.card-copy{background:var(--bg3);border:0.5px solid var(--border2);color:var(--text2);padding:3px 9px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:700;letter-spacing:.5px;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;transition:all .15s}
+.card-copy:hover{border-color:var(--orange);color:var(--orange)}
+.card-copy.copied{border-color:#00e676;color:#00e676}
+.chart-wrap{background:var(--bg2);border:0.5px solid var(--border2);border-radius:10px;padding:20px}
+.chart-title{font-size:14px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text2);margin-bottom:16px}
+.chart-title span{color:var(--orange)}
+.history-wrap{background:var(--bg2);border:0.5px solid var(--border2);border-radius:10px;overflow:hidden}
+.history-header{padding:12px 16px;border-bottom:0.5px solid var(--border2);background:var(--bg3);font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text2);display:flex;justify-content:space-between;align-items:center}
+.history-header span{color:var(--orange)}
+.hlist{max-height:340px;overflow-y:auto}
+.hlist::-webkit-scrollbar{width:4px}
+.hlist::-webkit-scrollbar-thumb{background:var(--red);border-radius:2px}
+.hrow{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:0.5px solid var(--border);font-size:13px;gap:12px}
+.hrow:last-child{border-bottom:none}
+.hrow:hover{background:var(--bg3)}
+.htime{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3)}
+.hcount{font-weight:700;color:var(--orange);font-size:15px}
+.hdelta{font-size:12px;font-family:'Share Tech Mono',monospace}
+.hdelta.up{color:#00e676}
+.hdelta.dn{color:var(--red)}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:56px;gap:14px;color:var(--text3);font-size:15px;font-weight:600;letter-spacing:.5px;text-align:center;line-height:1.6}
+.loader{width:32px;height:32px;border:2px solid var(--border2);border-top-color:var(--red);border-radius:50%;animation:spin .8s linear infinite}
+.section{display:none}
+.section.active{display:block}
+.footer{margin-top:20px;display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--text3);font-family:'Share Tech Mono',monospace;flex-wrap:wrap;gap:8px;padding-top:16px;border-top:0.5px solid var(--border)}
+.owner{display:flex;align-items:center;gap:8px}
+.owner img{width:22px;height:22px;border-radius:50%;border:0.5px solid var(--border2)}
+.toast{position:fixed;bottom:24px;right:24px;background:linear-gradient(135deg,var(--red),var(--orange));color:#fff;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:700;letter-spacing:.5px;z-index:10000;transform:translateY(60px);opacity:0;transition:all .3s;pointer-events:none}
+.toast.show{transform:translateY(0);opacity:1}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">iM</div>
+      <div>
+        <div class="logo-title">iMe RP</div>
+        <div class="logo-sub">Player Checker • Live</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="status-badge">
+        <div class="sdot" id="sdot"></div>
+        <span id="sstatus">Menghubungkan...</span>
+      </div>
+      <button class="rbtn" id="rbtn" onclick="loadData()">
+        <svg id="rico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0018.49 15"/></svg>
+        REFRESH
+      </button>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-label">Pemain Online</div>
+      <div class="stat-val red" id="s1">—</div>
+      <div class="stat-sub" id="s1sub">memuat...</div>
+      <div class="fill-bar"><div class="fill-inner" id="sbar" style="width:0%"></div></div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Kapasitas Max</div>
+      <div class="stat-val ora" id="s2">—</div>
+      <div class="stat-sub">total slot tersedia</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Slot Kosong</div>
+      <div class="stat-val" id="s3">—</div>
+      <div class="stat-sub" id="s3sub">memuat...</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Avg Ping</div>
+      <div class="stat-val gld" id="s4">—</div>
+      <div class="stat-sub">rata-rata semua pemain</div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('players',this)">⚔ Pemain</button>
+    <button class="tab" onclick="switchTab('chart',this)">📊 Grafik</button>
+    <button class="tab" onclick="switchTab('history',this)">🕐 History</button>
+  </div>
+
+  <!-- TAB PLAYERS -->
+  <div class="section active" id="tab-players">
+    <div class="controls">
+      <div class="search-wrap">
+        <span class="search-ico">🔍</span>
+        <input type="text" id="sq" placeholder="Cari nama atau prefix (LSPD, BMC, SIN...)" oninput="filter()">
+      </div>
+      <select class="ctrl-select" id="ssort" onchange="filter()">
+        <option value="id">Urut: ID</option>
+        <option value="name">Urut: Nama A-Z</option>
+        <option value="ping_asc">Urut: Ping ↑</option>
+        <option value="ping_desc">Urut: Ping ↓</option>
+      </select>
+      <div class="view-toggle">
+        <button class="vbtn active" onclick="setView('table',this)" title="Tabel">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>
+        </button>
+        <button class="vbtn" onclick="setView('card',this)" title="Kartu">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        </button>
+      </div>
+      <div class="count-badge">Tampil: <span id="pcount">—</span> pemain</div>
+    </div>
+
+    <div id="view-table">
+      <div class="table-wrap">
+        <div class="thead"><span>ID</span><span>Nama Pemain</span><span style="text-align:center">Ping</span><span style="text-align:center">Aksi</span></div>
+        <div class="plist" id="plist-table">
+          <div class="empty"><div class="loader"></div><span>Memuat data pemain...</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-card" style="display:none">
+      <div class="card-grid" id="plist-card">
+        <div class="empty" style="grid-column:1/-1"><div class="loader"></div><span>Memuat data pemain...</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB CHART -->
+  <div class="section" id="tab-chart">
+    <div class="chart-wrap">
+      <div class="chart-title">📈 Grafik Jumlah Pemain — <span>Sesi Ini</span></div>
+      <canvas id="myChart" style="max-height:240px"></canvas>
+      <div style="margin-top:12px;font-size:12px;color:var(--text3);font-family:'Share Tech Mono',monospace;text-align:center">
+        Data dikumpulkan otomatis setiap 30 detik
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB HISTORY -->
+  <div class="section" id="tab-history">
+    <div class="history-wrap">
+      <div class="history-header">
+        <span>🕐 History Jumlah Pemain Online</span>
+        <span id="hcount-badge">0 entri</span>
+      </div>
+      <div class="hlist" id="hlist">
+        <div class="empty" style="padding:40px"><span>Belum ada history.<br>Data terekam otomatis setiap refresh.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="owner">
+      <img src="https://forum.cfx.re/user_avatar/forum.cfx.re/legacyindonesia/128/3605660_2.png" alt="">
+      <span>Owner: LegacyIndonesia • discord.gg/imeroleplay</span>
+    </div>
+    <span id="ts">Auto-refresh setiap 30 detik</span>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const TARGET='https://servers-frontend.fivem.net/api/servers/single/zrvmg4';
+const PROXIES=[u=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,u=>`https://corsproxy.io/?${encodeURIComponent(u)}`,u=>`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`];
+let allPlayers=[],chartData={labels:[],counts:[]},history=[],myChart=null,currentView='table';
+
+function pingInfo(p){
+  if(!p||p<=0||p>2000)return{cls:'pr2',dot:'r',txt:'?'};
+  if(p<80)return{cls:'pg',dot:'g',txt:p};
+  if(p<180)return{cls:'py',dot:'y',txt:p};
+  return{cls:'pr2',dot:'r',txt:p};
+}
+
+function parseName(raw){
+  const n=(raw||'').trim();
+  const d=n.indexOf(' - '),x=n.indexOf(' x ');
+  if(d>0&&d<25)return{pfx:n.slice(0,d),nm:n.slice(d+3)};
+  if(x>0&&x<18)return{pfx:n.slice(0,x),nm:n.slice(x+3)};
+  return{pfx:'',nm:n};
+}
+
+function copyName(name,btn){
+  navigator.clipboard.writeText(name).then(()=>{
+    btn.textContent='COPIED!';btn.classList.add('copied');
+    showToast('Disalin: '+name.slice(0,24));
+    setTimeout(()=>{btn.textContent='COPY';btn.classList.remove('copied');},1500);
+  });
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent='✅ '+msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+function renderTable(players){
+  const el=document.getElementById('plist-table');
+  if(!players.length){el.innerHTML='<div class="empty"><span>⚠️ Tidak ada pemain ditemukan</span></div>';return;}
+  el.innerHTML=players.map(p=>{
+    const pi=pingInfo(p.ping),{pfx,nm}=parseName(p.name),fn=(p.name||'Unknown').replace(/'/g,"\\'");
+    return`<div class="prow">
+      <span class="pid">#${p.id}</span>
+      <span>${pfx?`<div class="ppfx">${pfx}</div>`:''}<div class="pname" title="${p.name||''}">${nm||p.name||'Unknown'}</div></span>
+      <span class="pping ${pi.cls}"><span class="pingdot ${pi.dot}"></span>${pi.txt} ms</span>
+      <span style="text-align:center"><button class="copy-btn" onclick="copyName('${fn}',this)">COPY</button></span>
+    </div>`;
+  }).join('');
+}
+
+function renderCards(players){
+  const el=document.getElementById('plist-card');
+  if(!players.length){el.innerHTML='<div class="empty" style="grid-column:1/-1"><span>⚠️ Tidak ada pemain ditemukan</span></div>';return;}
+  el.innerHTML=players.map(p=>{
+    const pi=pingInfo(p.ping),{pfx,nm}=parseName(p.name),fn=(p.name||'Unknown').replace(/'/g,"\\'");
+    return`<div class="pcard">
+      <div class="card-id">#${p.id}</div>
+      ${pfx?`<div class="card-pfx">${pfx}</div>`:''}
+      <div class="card-name" title="${p.name||''}">${nm||p.name||'Unknown'}</div>
+      <div class="card-footer">
+        <span class="card-ping ${pi.cls}"><span class="pingdot ${pi.dot}"></span>${pi.txt} ms</span>
+        <button class="card-copy" onclick="copyName('${fn}',this)">COPY</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filter(){
+  const q=document.getElementById('sq').value.toLowerCase().trim();
+  const sort=document.getElementById('ssort').value;
+  let res=q?allPlayers.filter(p=>(p.name||'').toLowerCase().includes(q)):[...allPlayers];
+  if(sort==='name')res.sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  else if(sort==='ping_asc')res.sort((a,b)=>(a.ping||9999)-(b.ping||9999));
+  else if(sort==='ping_desc')res.sort((a,b)=>(b.ping||0)-(a.ping||0));
+  else res.sort((a,b)=>a.id-b.id);
+  document.getElementById('pcount').textContent=res.length.toLocaleString('id-ID');
+  renderTable(res);renderCards(res);
+}
+
+function setView(v,btn){
+  currentView=v;
+  document.getElementById('view-table').style.display=v==='table'?'block':'none';
+  document.getElementById('view-card').style.display=v==='card'?'block':'none';
+  document.querySelectorAll('.vbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function switchTab(name,btn){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  btn.classList.add('active');
+  if(name==='chart')updateChart();
+}
+
+function updateChart(){
+  const ctx=document.getElementById('myChart').getContext('2d');
+  if(myChart)myChart.destroy();
+  if(!chartData.labels.length){
+    document.getElementById('myChart').style.display='none';return;
+  }
+  document.getElementById('myChart').style.display='block';
+  myChart=new Chart(ctx,{
+    type:'line',
+    data:{labels:chartData.labels,datasets:[{label:'Pemain Online',data:chartData.counts,borderColor:'#ff3c3c',backgroundColor:'rgba(255,60,60,.07)',borderWidth:2,fill:true,tension:.4,pointBackgroundColor:'#ff8c00',pointRadius:4,pointHoverRadius:6}]},
+    options:{responsive:true,plugins:{legend:{labels:{color:'#a07880',font:{family:'Barlow Condensed',size:13}}},tooltip:{backgroundColor:'#180d10',titleColor:'#ff8c00',bodyColor:'#f0d0d5',borderColor:'#3d1a1e',borderWidth:1}},scales:{x:{ticks:{color:'#6a4850',font:{family:'Share Tech Mono',size:10}},grid:{color:'rgba(42,18,21,.8)'}},y:{ticks:{color:'#6a4850',font:{family:'Share Tech Mono',size:10}},grid:{color:'rgba(42,18,21,.8)'},beginAtZero:false}}}
+  });
+}
+
+function addHistory(count){
+  const now=new Date();
+  const prev=history.length?history[0].count:null;
+  const delta=prev!==null?count-prev:0;
+  history.unshift({time:now.toLocaleTimeString('id-ID'),count,delta});
+  if(history.length>60)history.pop();
+  const label=now.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+  chartData.labels.push(label);chartData.counts.push(count);
+  if(chartData.labels.length>30){chartData.labels.shift();chartData.counts.shift();}
+  renderHistory();
+}
+
+function renderHistory(){
+  const el=document.getElementById('hlist');
+  document.getElementById('hcount-badge').textContent=history.length+' entri';
+  if(!history.length){el.innerHTML='<div class="empty" style="padding:32px"><span>Belum ada history.</span></div>';return;}
+  el.innerHTML=history.map((h,i)=>{
+    const dh=i===history.length-1?'':h.delta>0?`<span class="hdelta up">▲ +${h.delta}</span>`:h.delta<0?`<span class="hdelta dn">▼ ${h.delta}</span>`:`<span class="hdelta" style="color:var(--text3)">— sama</span>`;
+    return`<div class="hrow"><span class="htime">${h.time}</span><span class="hcount">${h.count.toLocaleString('id-ID')} pemain</span>${dh}</div>`;
+  }).join('');
+}
+
+async function fetchData(){
+  for(let i=-1;i<PROXIES.length;i++){
+    try{
+      let r;
+      if(i===-1)r=await fetch(TARGET);
+      else r=await fetch(PROXIES[i](TARGET));
+      if(!r.ok)throw new Error();
+      return JSON.parse(await r.text());
+    }catch(e){if(i===PROXIES.length-1)throw e;}
+  }
+}
+
+async function loadData(){
+  const btn=document.getElementById('rbtn'),ico=document.getElementById('rico');
+  btn.disabled=true;ico.classList.add('spin');
+  try{
+    const d=await fetchData(),sv=d.Data;
+    const players=sv.players||[],maxC=parseInt(sv.sv_maxclients||sv.svMaxclients||2048);
+    const online=sv.clients||players.length,slots=maxC-online;
+    const pct=Math.min(100,Math.round(online/maxC*100));
+    const valid=players.filter(p=>p.ping>0&&p.ping<2000);
+    const avg=valid.length?Math.round(valid.reduce((s,p)=>s+p.ping,0)/valid.length):0;
+    document.getElementById('sdot').className='sdot on';
+    document.getElementById('sstatus').textContent=sv.hostname||'iMe RP';
+    document.getElementById('s1').textContent=online.toLocaleString('id-ID');
+    document.getElementById('s1sub').textContent='dari '+maxC.toLocaleString('id-ID')+' slot ('+pct+'%)';
+    document.getElementById('s2').textContent=maxC.toLocaleString('id-ID');
+    document.getElementById('s3').textContent=slots.toLocaleString('id-ID');
+    document.getElementById('s3sub').textContent=Math.round(slots/maxC*100)+'% slot masih kosong';
+    document.getElementById('s4').textContent=avg+' ms';
+    document.getElementById('sbar').style.width=pct+'%';
+    addHistory(online);
+    allPlayers=players;filter();
+    document.getElementById('ts').textContent='Update: '+new Date().toLocaleTimeString('id-ID')+' • Auto 30s';
+  }catch(e){
+    document.getElementById('sdot').className='sdot off';
+    document.getElementById('sstatus').textContent='Offline / Gagal Konek';
+    const err='<div class="empty"><span>❌ Tidak dapat terhubung ke server.</span></div>';
+    document.getElementById('plist-table').innerHTML=err;
+    document.getElementById('plist-card').innerHTML=err;
+  }
+  btn.disabled=false;ico.classList.remove('spin');
+}
+
+loadData();
+setInterval(loadData,30000);
+</script>
+</body>
+</html>
