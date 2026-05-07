@@ -19,12 +19,8 @@
       padding: 30px 16px;
     }
 
-    .container {
-      width: 100%;
-      max-width: 860px;
-    }
+    .container { width: 100%; max-width: 860px; }
 
-    /* ── TOP BANNER ── */
     .banner {
       background: #080c14;
       border: 0.5px solid #162035;
@@ -81,7 +77,6 @@
     .spinning { animation: spin .7s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── STAT CARDS ── */
     .cards {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -105,11 +100,7 @@
     .bar-wrap { height: 4px; background: #0c1828; border-radius: 2px; margin-top: 8px; overflow: hidden; }
     .bar-fill { height: 100%; background: linear-gradient(90deg,#4a9eff,#00e676); border-radius: 2px; transition: width .6s; }
 
-    /* ── SEARCH / SORT ── */
-    .srow {
-      display: flex; gap: 10px; margin-bottom: 14px;
-      flex-wrap: wrap;
-    }
+    .srow { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
     .sinput {
       flex: 1; min-width: 180px;
       background: #080c14;
@@ -132,7 +123,6 @@
       font-size: 14px;
     }
 
-    /* ── TABLE ── */
     .table-wrap {
       background: #080c14;
       border: 0.5px solid #162035;
@@ -165,24 +155,14 @@
       align-items: center;
       border-bottom: 0.5px solid #0e1825;
       transition: background .12s;
-      cursor: default;
     }
     .prow:last-child { border-bottom: none; }
     .prow:hover { background: #0c1422; }
 
-    .pid {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 12px; color: #3a6aaa;
-    }
-    .ppfx {
-      font-size: 11px; color: #4a7ab5; font-weight: 600;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-      letter-spacing: .3px;
-    }
-    .pname {
-      font-size: 14px; font-weight: 600; color: #b8cce8;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
+    .pid { font-family: 'Share Tech Mono', monospace; font-size: 12px; color: #3a6aaa; }
+    .ppfx { font-size: 11px; color: #4a7ab5; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pname { font-size: 14px; font-weight: 600; color: #b8cce8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
     .pping {
       font-family: 'Share Tech Mono', monospace;
       font-size: 13px;
@@ -194,12 +174,11 @@
     .py { color: #ffc107; } .pdot.y { background: #ffc107; }
     .pr { color: #ff4444; } .pdot.r { background: #ff4444; }
 
-    /* ── EMPTY / LOADING ── */
     .empty {
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
       padding: 48px; gap: 12px;
-      color: #254060; font-size: 15px;
+      color: #254060; font-size: 15px; text-align: center;
     }
     .spin-ico {
       width: 30px; height: 30px;
@@ -209,7 +188,6 @@
       animation: spin .8s linear infinite;
     }
 
-    /* ── FOOTER ── */
     .footer {
       margin-top: 14px;
       display: flex; justify-content: space-between; align-items: center;
@@ -224,7 +202,6 @@
 <body>
 <div class="container">
 
-  <!-- BANNER -->
   <div class="banner">
     <div class="srv-left">
       <div class="dot" id="dot"></div>
@@ -244,7 +221,6 @@
     </button>
   </div>
 
-  <!-- STAT CARDS -->
   <div class="cards">
     <div class="card">
       <div class="clabel">Pemain Online</div>
@@ -265,7 +241,6 @@
     </div>
   </div>
 
-  <!-- SEARCH + SORT -->
   <div class="srow">
     <input class="sinput" id="sq" type="text" placeholder="🔍  Cari nama / prefix pemain..." oninput="filter()">
     <select class="sselect" id="ssort" onchange="filter()">
@@ -276,7 +251,6 @@
     </select>
   </div>
 
-  <!-- TABLE -->
   <div class="table-wrap">
     <div class="thead">
       <span>ID</span>
@@ -291,7 +265,6 @@
     </div>
   </div>
 
-  <!-- FOOTER -->
   <div class="footer">
     <div class="owner">
       <img src="https://forum.cfx.re/user_avatar/forum.cfx.re/legacyindonesia/128/3605660_2.png" alt="owner">
@@ -303,8 +276,17 @@
 </div>
 
 <script>
-  const API = 'https://servers-frontend.fivem.net/api/servers/single/zrvmg4';
+  const TARGET = 'https://servers-frontend.fivem.net/api/servers/single/zrvmg4';
+
+  // Daftar proxy CORS gratis sebagai fallback
+  const PROXIES = [
+    url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+    url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+    url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+  ];
+
   let allPlayers = [];
+  let proxyIndex = 0;
 
   function pingInfo(p) {
     if (!p || p <= 0 || p > 2000) return { cls: 'pr', dot: 'r', txt: '?' };
@@ -348,11 +330,20 @@
     const q = document.getElementById('sq').value.toLowerCase().trim();
     const sort = document.getElementById('ssort').value;
     let res = q ? allPlayers.filter(p => (p.name || '').toLowerCase().includes(q)) : [...allPlayers];
-    if (sort === 'name')      res.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    if (sort === 'name')           res.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     else if (sort === 'ping_asc')  res.sort((a, b) => (a.ping || 9999) - (b.ping || 9999));
     else if (sort === 'ping_desc') res.sort((a, b) => (b.ping || 0) - (a.ping || 0));
-    else res.sort((a, b) => a.id - b.id);
+    else                           res.sort((a, b) => a.id - b.id);
     render(res);
+  }
+
+  async function fetchWithProxy(idx) {
+    if (idx >= PROXIES.length) throw new Error('Semua proxy gagal');
+    const proxyUrl = PROXIES[idx](TARGET);
+    const r = await fetch(proxyUrl);
+    if (!r.ok) throw new Error('proxy gagal');
+    const text = await r.text();
+    return JSON.parse(text);
   }
 
   async function load() {
@@ -361,10 +352,33 @@
     btn.disabled = true;
     ico.classList.add('spinning');
 
+    let d = null;
+
+    // Coba langsung dulu, lalu pakai proxy jika gagal
+    for (let i = -1; i < PROXIES.length; i++) {
+      try {
+        if (i === -1) {
+          const r = await fetch(TARGET);
+          if (!r.ok) throw new Error();
+          d = await r.json();
+        } else {
+          d = await fetchWithProxy(i);
+        }
+        break;
+      } catch(e) {
+        if (i === PROXIES.length - 1) {
+          document.getElementById('dot').className = 'dot off';
+          document.getElementById('sname').textContent = 'Server Offline / Gagal Konek';
+          document.getElementById('plist').innerHTML =
+            '<div class="empty"><span>❌ Tidak dapat terhubung ke server.<br>Cek koneksi internet kamu.</span></div>';
+          btn.disabled = false;
+          ico.classList.remove('spinning');
+          return;
+        }
+      }
+    }
+
     try {
-      const r = await fetch(API);
-      if (!r.ok) throw new Error('fetch failed');
-      const d = await r.json();
       const sv = d.Data;
 
       document.getElementById('sname').textContent = sv.hostname || 'iMe RP';
@@ -396,12 +410,10 @@
       const now = new Date();
       document.getElementById('ts').textContent =
         'Terakhir update: ' + now.toLocaleTimeString('id-ID');
-
-    } catch (e) {
+    } catch(e) {
       document.getElementById('dot').className = 'dot off';
-      document.getElementById('sname').textContent = 'Server Offline / Gagal Konek';
       document.getElementById('plist').innerHTML =
-        '<div class="empty"><span>❌ Tidak dapat terhubung ke server.<br>Cek koneksi internet kamu.</span></div>';
+        '<div class="empty"><span>❌ Gagal memproses data server.</span></div>';
     }
 
     btn.disabled = false;
