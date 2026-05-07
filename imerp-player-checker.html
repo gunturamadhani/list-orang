@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>iMe RP - Player Checker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Rajdhani', sans-serif;
+      background: #050810;
+      color: #d0dff5;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 30px 16px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 860px;
+    }
+
+    /* ── TOP BANNER ── */
+    .banner {
+      background: #080c14;
+      border: 0.5px solid #162035;
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .srv-left { display: flex; align-items: center; gap: 12px; }
+
+    .dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: #00e676;
+      flex-shrink: 0;
+      animation: blink 2s infinite;
+    }
+    .dot.off { background: #ff4444; animation: none; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.25} }
+
+    .sname { font-size: 22px; font-weight: 700; color: #fff; letter-spacing: .5px; }
+    .smeta { display: flex; align-items: center; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
+    .sid {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px; color: #3a6aaa;
+      background: #0c1828;
+      padding: 2px 8px; border-radius: 4px;
+      border: 0.5px solid #1a3860;
+    }
+    .disc a { font-size: 12px; color: #4a9eff; text-decoration: none; }
+    .disc a:hover { text-decoration: underline; }
+
+    .rbtn {
+      background: #0c1828;
+      border: 0.5px solid #1a3860;
+      color: #4a9eff;
+      padding: 9px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 14px; font-weight: 600;
+      letter-spacing: .5px;
+      display: flex; align-items: center; gap: 6px;
+      transition: background .15s;
+    }
+    .rbtn:hover { background: #112035; }
+    .rbtn:disabled { opacity: .4; cursor: not-allowed; }
+
+    .spinning { animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── STAT CARDS ── */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    @media(max-width:600px){ .cards{ grid-template-columns: repeat(2,1fr); } }
+
+    .card {
+      background: #080c14;
+      border: 0.5px solid #162035;
+      border-radius: 8px;
+      padding: 14px 16px;
+      text-align: center;
+    }
+    .clabel { font-size: 10px; color: #3a6aaa; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+    .cval { font-size: 26px; font-weight: 700; color: #fff; line-height: 1; }
+    .cval.g { color: #00e676; }
+    .cval.b { color: #4a9eff; }
+    .cval.y { color: #ffc107; }
+    .bar-wrap { height: 4px; background: #0c1828; border-radius: 2px; margin-top: 8px; overflow: hidden; }
+    .bar-fill { height: 100%; background: linear-gradient(90deg,#4a9eff,#00e676); border-radius: 2px; transition: width .6s; }
+
+    /* ── SEARCH / SORT ── */
+    .srow {
+      display: flex; gap: 10px; margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .sinput {
+      flex: 1; min-width: 180px;
+      background: #080c14;
+      border: 0.5px solid #162035;
+      color: #d0dff5;
+      padding: 9px 14px;
+      border-radius: 8px;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 15px; font-weight: 500;
+    }
+    .sinput::placeholder { color: #254060; }
+    .sinput:focus { outline: none; border-color: #2a5a9a; }
+    .sselect {
+      background: #080c14;
+      border: 0.5px solid #162035;
+      color: #d0dff5;
+      padding: 9px 12px;
+      border-radius: 8px;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 14px;
+    }
+
+    /* ── TABLE ── */
+    .table-wrap {
+      background: #080c14;
+      border: 0.5px solid #162035;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .thead {
+      display: grid;
+      grid-template-columns: 60px 1fr 100px;
+      gap: 8px;
+      padding: 10px 16px;
+      font-size: 10px; letter-spacing: 1px;
+      color: #3a6aaa;
+      text-transform: uppercase;
+      border-bottom: 0.5px solid #162035;
+      background: #0a0f1a;
+    }
+
+    .plist { max-height: 420px; overflow-y: auto; }
+    .plist::-webkit-scrollbar { width: 4px; }
+    .plist::-webkit-scrollbar-track { background: #080c14; }
+    .plist::-webkit-scrollbar-thumb { background: #1a3860; border-radius: 2px; }
+
+    .prow {
+      display: grid;
+      grid-template-columns: 60px 1fr 100px;
+      gap: 8px;
+      padding: 10px 16px;
+      align-items: center;
+      border-bottom: 0.5px solid #0e1825;
+      transition: background .12s;
+      cursor: default;
+    }
+    .prow:last-child { border-bottom: none; }
+    .prow:hover { background: #0c1422; }
+
+    .pid {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 12px; color: #3a6aaa;
+    }
+    .ppfx {
+      font-size: 11px; color: #4a7ab5; font-weight: 600;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      letter-spacing: .3px;
+    }
+    .pname {
+      font-size: 14px; font-weight: 600; color: #b8cce8;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .pping {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 13px;
+      text-align: right;
+      display: flex; align-items: center; justify-content: flex-end; gap: 5px;
+    }
+    .pdot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .pg { color: #00e676; } .pdot.g { background: #00e676; }
+    .py { color: #ffc107; } .pdot.y { background: #ffc107; }
+    .pr { color: #ff4444; } .pdot.r { background: #ff4444; }
+
+    /* ── EMPTY / LOADING ── */
+    .empty {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 48px; gap: 12px;
+      color: #254060; font-size: 15px;
+    }
+    .spin-ico {
+      width: 30px; height: 30px;
+      border: 2px solid #162035;
+      border-top-color: #4a9eff;
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+
+    /* ── FOOTER ── */
+    .footer {
+      margin-top: 14px;
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 11px; color: #1e3a60;
+      font-family: 'Share Tech Mono', monospace;
+      flex-wrap: wrap; gap: 6px;
+    }
+    .owner { display: flex; align-items: center; gap: 7px; }
+    .owner img { width: 22px; height: 22px; border-radius: 50%; border: 0.5px solid #1a3860; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- BANNER -->
+  <div class="banner">
+    <div class="srv-left">
+      <div class="dot" id="dot"></div>
+      <div>
+        <div class="sname" id="sname">iMe RP</div>
+        <div class="smeta">
+          <span class="sid">zrvmg4</span>
+          <span class="disc" id="disc"></span>
+        </div>
+      </div>
+    </div>
+    <button class="rbtn" id="rbtn" onclick="load()">
+      <svg id="rico" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0018.49 15"/>
+      </svg>
+      Refresh
+    </button>
+  </div>
+
+  <!-- STAT CARDS -->
+  <div class="cards">
+    <div class="card">
+      <div class="clabel">Pemain Online</div>
+      <div class="cval g" id="c1">—</div>
+      <div class="bar-wrap"><div class="bar-fill" id="cbar" style="width:0%"></div></div>
+    </div>
+    <div class="card">
+      <div class="clabel">Kapasitas</div>
+      <div class="cval b" id="c2">—</div>
+    </div>
+    <div class="card">
+      <div class="clabel">Slot Kosong</div>
+      <div class="cval" id="c3">—</div>
+    </div>
+    <div class="card">
+      <div class="clabel">Rata-rata Ping</div>
+      <div class="cval y" id="c4">—</div>
+    </div>
+  </div>
+
+  <!-- SEARCH + SORT -->
+  <div class="srow">
+    <input class="sinput" id="sq" type="text" placeholder="🔍  Cari nama / prefix pemain..." oninput="filter()">
+    <select class="sselect" id="ssort" onchange="filter()">
+      <option value="id">Urut: ID</option>
+      <option value="name">Urut: Nama A-Z</option>
+      <option value="ping_asc">Urut: Ping ↑ Terkecil</option>
+      <option value="ping_desc">Urut: Ping ↓ Terbesar</option>
+    </select>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-wrap">
+    <div class="thead">
+      <span>ID</span>
+      <span>Nama Pemain</span>
+      <span style="text-align:right">Ping (ms)</span>
+    </div>
+    <div class="plist" id="plist">
+      <div class="empty">
+        <div class="spin-ico"></div>
+        <span>Menghubungkan ke server iMe RP...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="owner">
+      <img src="https://forum.cfx.re/user_avatar/forum.cfx.re/legacyindonesia/128/3605660_2.png" alt="owner">
+      <span>Owner: LegacyIndonesia</span>
+    </div>
+    <span id="ts">Auto-refresh setiap 30 detik</span>
+  </div>
+
+</div>
+
+<script>
+  const API = 'https://servers-frontend.fivem.net/api/servers/single/zrvmg4';
+  let allPlayers = [];
+
+  function pingInfo(p) {
+    if (!p || p <= 0 || p > 2000) return { cls: 'pr', dot: 'r', txt: '?' };
+    if (p < 80)  return { cls: 'pg', dot: 'g', txt: p };
+    if (p < 180) return { cls: 'py', dot: 'y', txt: p };
+    return { cls: 'pr', dot: 'r', txt: p };
+  }
+
+  function parseName(raw) {
+    const name = (raw || '').trim();
+    const d = name.indexOf(' - ');
+    const x = name.indexOf(' x ');
+    if (d > 0 && d < 22) return { pfx: name.slice(0, d), nm: name.slice(d + 3) };
+    if (x > 0 && x < 15) return { pfx: name.slice(0, x), nm: name.slice(x + 3) };
+    return { pfx: '', nm: name };
+  }
+
+  function render(players) {
+    const list = document.getElementById('plist');
+    if (!players.length) {
+      list.innerHTML = '<div class="empty"><span>⚠️ Pemain tidak ditemukan</span></div>';
+      return;
+    }
+    list.innerHTML = players.map(p => {
+      const pi = pingInfo(p.ping);
+      const { pfx, nm } = parseName(p.name);
+      return `<div class="prow">
+        <span class="pid">#${p.id}</span>
+        <span>
+          ${pfx ? `<div class="ppfx">${pfx}</div>` : ''}
+          <div class="pname" title="${p.name}">${nm || p.name || 'Unknown'}</div>
+        </span>
+        <span class="pping ${pi.cls}">
+          <span class="pdot ${pi.dot}"></span>${pi.txt}
+        </span>
+      </div>`;
+    }).join('');
+  }
+
+  function filter() {
+    const q = document.getElementById('sq').value.toLowerCase().trim();
+    const sort = document.getElementById('ssort').value;
+    let res = q ? allPlayers.filter(p => (p.name || '').toLowerCase().includes(q)) : [...allPlayers];
+    if (sort === 'name')      res.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    else if (sort === 'ping_asc')  res.sort((a, b) => (a.ping || 9999) - (b.ping || 9999));
+    else if (sort === 'ping_desc') res.sort((a, b) => (b.ping || 0) - (a.ping || 0));
+    else res.sort((a, b) => a.id - b.id);
+    render(res);
+  }
+
+  async function load() {
+    const btn = document.getElementById('rbtn');
+    const ico = document.getElementById('rico');
+    btn.disabled = true;
+    ico.classList.add('spinning');
+
+    try {
+      const r = await fetch(API);
+      if (!r.ok) throw new Error('fetch failed');
+      const d = await r.json();
+      const sv = d.Data;
+
+      document.getElementById('sname').textContent = sv.hostname || 'iMe RP';
+      document.getElementById('dot').className = 'dot';
+
+      const players  = sv.players || [];
+      const maxC     = parseInt(sv.sv_maxclients || sv.svMaxclients || 2048);
+      const online   = sv.clients || players.length;
+      const slots    = maxC - online;
+      const valid    = players.filter(p => p.ping > 0 && p.ping < 2000);
+      const avgPing  = valid.length ? Math.round(valid.reduce((s, p) => s + p.ping, 0) / valid.length) : 0;
+      const pct      = Math.min(100, Math.round(online / maxC * 100));
+
+      document.getElementById('c1').textContent   = online.toLocaleString('id-ID');
+      document.getElementById('c2').textContent   = maxC.toLocaleString('id-ID');
+      document.getElementById('c3').textContent   = slots.toLocaleString('id-ID');
+      document.getElementById('c4').textContent   = avgPing + ' ms';
+      document.getElementById('cbar').style.width = pct + '%';
+
+      const discLink = sv.vars?.Discord1 || sv.vars?.Discord2 || '';
+      if (discLink) {
+        document.getElementById('disc').innerHTML =
+          `<a href="https://${discLink}" target="_blank">🔗 ${discLink}</a>`;
+      }
+
+      allPlayers = players;
+      filter();
+
+      const now = new Date();
+      document.getElementById('ts').textContent =
+        'Terakhir update: ' + now.toLocaleTimeString('id-ID');
+
+    } catch (e) {
+      document.getElementById('dot').className = 'dot off';
+      document.getElementById('sname').textContent = 'Server Offline / Gagal Konek';
+      document.getElementById('plist').innerHTML =
+        '<div class="empty"><span>❌ Tidak dapat terhubung ke server.<br>Cek koneksi internet kamu.</span></div>';
+    }
+
+    btn.disabled = false;
+    ico.classList.remove('spinning');
+  }
+
+  load();
+  setInterval(load, 30000);
+</script>
+</body>
+</html>
