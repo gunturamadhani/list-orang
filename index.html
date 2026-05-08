@@ -269,9 +269,13 @@ function pingInfo(p){
 
 function parseName(raw){
   const n=(raw||'').trim();
-  const d=n.indexOf(' - '),x=n.indexOf(' x ');
-  if(d>0&&d<25)return{pfx:n.slice(0,d),nm:n.slice(d+3)};
-  if(x>0&&x<18)return{pfx:n.slice(0,x),nm:n.slice(x+3)};
+  // Format: "moonlight - binyo" atau "969GxBOSMC-Sunny"
+  // Cari tanda pemisah: " - " (spasi-dash-spasi) atau "-" tanpa spasi
+  const d1=n.indexOf(' - ');
+  if(d1>0)return{pfx:n.slice(0,d1).trim(),nm:n.slice(d1+3).trim()};
+  // Cari "-" tanpa spasi, ambil bagian sebelumnya sebagai prefix (gang/instansi)
+  const d2=n.indexOf('-');
+  if(d2>0&&d2<n.length-1)return{pfx:n.slice(0,d2).trim(),nm:n.slice(d2+1).trim()};
   return{pfx:'',nm:n};
 }
 
@@ -320,10 +324,27 @@ function renderCards(players){
   }).join('');
 }
 
+function matchSearch(name,q){
+  if(!q)return true;
+  const n=(name||'').toLowerCase();
+  // Pecah nama jadi token berdasarkan spasi, dash, underscore
+  const tokens=n.split(/[\s\-_]+/).filter(Boolean);
+  // Juga tambahkan prefix gang dari parseName sebagai token tersendiri
+  const {pfx,nm}=parseName(name);
+  if(pfx){
+    // Pecah prefix juga (contoh: "969GxBOSMC" -> ["969g","bosmc"])
+    const pfxTokens=pfx.toLowerCase().split(/[x\s\-_]+/).filter(Boolean);
+    pfxTokens.forEach(t=>{if(!tokens.includes(t))tokens.push(t);});
+    tokens.push(pfx.toLowerCase());
+  }
+  // Cocokkan jika ada token yang DIAWALI dengan query (bukan substring di tengah kata)
+  return tokens.some(t=>t.startsWith(q));
+}
+
 function filter(){
   const q=document.getElementById('sq').value.toLowerCase().trim();
   const sort=document.getElementById('ssort').value;
-  let res=q?allPlayers.filter(p=>(p.name||'').toLowerCase().includes(q)):[...allPlayers];
+  let res=q?allPlayers.filter(p=>matchSearch(p.name,q)):[...allPlayers];
   if(sort==='name')res.sort((a,b)=>(a.name||'').localeCompare(b.name||''));
   else if(sort==='ping_asc')res.sort((a,b)=>(a.ping||9999)-(b.ping||9999));
   else if(sort==='ping_desc')res.sort((a,b)=>(b.ping||0)-(a.ping||0));
