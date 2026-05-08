@@ -56,6 +56,9 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 .search-wrap input{width:100%;background:var(--bg2);border:0.5px solid var(--border2);color:var(--text);padding:10px 14px 10px 38px;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:500}
 .search-wrap input::placeholder{color:var(--text3)}
 .search-wrap input:focus{outline:none;border-color:var(--red)}
+.search-wrap input.has-val{padding-right:32px}
+.clear-input-btn{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:var(--bg3);border:0.5px solid var(--border2);color:var(--text2);width:20px;height:20px;border-radius:50%;cursor:pointer;font-size:11px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;transition:all .15s;padding:0}
+.clear-input-btn:hover{border-color:var(--red);color:var(--red)}
 .search-ico{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none;font-size:15px}
 .ctrl-select{background:var(--bg2);border:0.5px solid var(--border2);color:var(--text);padding:10px 12px;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:600}
 .view-toggle{display:flex;gap:4px;background:var(--bg2);border:0.5px solid var(--border2);padding:4px;border-radius:8px}
@@ -205,11 +208,13 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
     <div class="controls">
       <div class="search-wrap">
         <span class="search-ico">🔍</span>
-        <input type="text" id="sq" placeholder="Cari nama atau prefix (LSPD, BMC, SIN...)" oninput="filter()">
+        <input type="text" id="sq" placeholder="Cari nama atau prefix (LSPD, BMC, SIN...)" oninput="filterAndToggleClear()">
+        <button class="clear-input-btn" id="clearSq" onclick="clearSearch('sq','clearSq')" style="display:none" title="Hapus">✕</button>
       </div>
       <div class="search-wrap" style="max-width:190px">
         <span class="search-ico" style="font-family:monospace;font-weight:700">#</span>
-        <input type="number" id="sqid" placeholder="ID kantong..." oninput="filter()" style="padding-left:28px">
+        <input type="number" id="sqid" placeholder="ID kantong..." oninput="filterAndToggleClear()" style="padding-left:28px">
+        <button class="clear-input-btn" id="clearSqid" onclick="clearSearch('sqid','clearSqid')" style="display:none" title="Hapus">✕</button>
       </div>
       <select class="ctrl-select" id="ssort" onchange="filter()">
         <option value="id">Urut: ID</option>
@@ -383,6 +388,25 @@ function matchSearch(name,q){
   }
   // Cocokkan jika ada token yang DIAWALI dengan query (bukan substring di tengah kata)
   return tokens.some(t=>t.startsWith(q));
+}
+
+function filterAndToggleClear(){
+  const sq=document.getElementById('sq');
+  const sqid=document.getElementById('sqid');
+  const csq=document.getElementById('clearSq');
+  const csqid=document.getElementById('clearSqid');
+  csq.style.display=sq.value?'flex':'none';
+  sq.classList.toggle('has-val',!!sq.value);
+  csqid.style.display=sqid.value?'flex':'none';
+  sqid.classList.toggle('has-val',!!sqid.value);
+  filter();
+}
+
+function clearSearch(inputId,btnId){
+  document.getElementById(inputId).value='';
+  document.getElementById(btnId).style.display='none';
+  document.getElementById(inputId).classList.remove('has-val');
+  filter();
 }
 
 function filter(){
@@ -581,6 +605,10 @@ function clearGangFilter() {
   document.getElementById('clearGangBtn').style.display = 'none';
   document.getElementById('sq').value = '';
   document.getElementById('sqid').value = '';
+  document.getElementById('clearSq').style.display='none';
+  document.getElementById('clearSqid').style.display='none';
+  document.getElementById('sq').classList.remove('has-val');
+  document.getElementById('sqid').classList.remove('has-val');
   filter();
   buildGangStats(allPlayers);
 }
@@ -603,8 +631,8 @@ function loadUrlParams() {
   const params = new URLSearchParams(window.location.search);
   const gang = params.get('gang');
   const id = params.get('id');
-  if (gang) { document.getElementById('sq').value = gang; }
-  if (id) { document.getElementById('sqid').value = id; }
+  if (gang) { document.getElementById('sq').value = gang; document.getElementById('clearSq').style.display='flex'; document.getElementById('sq').classList.add('has-val'); }
+  if (id) { document.getElementById('sqid').value = id; document.getElementById('clearSqid').style.display='flex'; document.getElementById('sqid').classList.add('has-val'); }
 }
 
 loadData();
