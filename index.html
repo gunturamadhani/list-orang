@@ -124,6 +124,65 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 .footer{margin-top:20px;display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--text3);font-family:'Share Tech Mono',monospace;flex-wrap:wrap;gap:8px;padding-top:16px;border-top:0.5px solid var(--border)}
 .owner{display:flex;align-items:center;gap:8px}
 .owner img{width:22px;height:22px;border-radius:50%;border:0.5px solid var(--border2)}
+.seen-controls{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
+.seen-search{flex:1;min-width:160px;background:var(--bg2);border:0.5px solid var(--border2);color:var(--text);padding:8px 12px;border-radius:8px;font-family:"Barlow Condensed",sans-serif;font-size:14px}
+.seen-search::placeholder{color:var(--text3)}
+.seen-search:focus{outline:none;border-color:var(--red)}
+.seen-filter{display:flex;gap:4px}
+.sf{padding:6px 12px;border-radius:6px;border:0.5px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-size:12px;font-weight:700;letter-spacing:.5px;font-family:"Barlow Condensed",sans-serif;text-transform:uppercase;transition:all .15s}
+.sf.act{background:linear-gradient(135deg,var(--red),var(--orange));color:#fff;border-color:transparent}
+.seen-stats{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.seen-stat{background:var(--bg2);border:0.5px solid var(--border2);border-radius:8px;padding:10px 14px;text-align:center;flex:1;min-width:80px}
+.seen-stat-val{font-size:22px;font-weight:800;color:#fff;line-height:1}
+.seen-stat-val.red{color:var(--red)}.seen-stat-val.g{color:#00e676}.seen-stat-val.ora{color:var(--orange)}
+.seen-stat-lbl{font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-top:4px}
+.seen-thead{display:grid;grid-template-columns:64px 1fr 120px 100px;gap:8px;padding:8px 14px;font-size:10px;letter-spacing:1.5px;color:var(--text2);text-transform:uppercase;font-weight:700;border-bottom:0.5px solid var(--border2);background:var(--bg3)}
+.seen-row{display:grid;grid-template-columns:64px 1fr 120px 100px;gap:8px;padding:9px 14px;align-items:center;border-bottom:0.5px solid var(--border);transition:background .1s}
+.seen-row:last-child{border-bottom:none}
+.seen-row:hover{background:var(--bg3)}
+.seen-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;letter-spacing:.5px;text-transform:uppercase;display:inline-block}
+.seen-badge.on{background:rgba(0,230,118,.15);color:#00e676;border:0.5px solid rgba(0,230,118,.3)}
+.seen-badge.off{background:var(--bg3);color:var(--text3);border:0.5px solid var(--border2)}
+.seen-time{font-family:"Share Tech Mono",monospace;font-size:11px;color:var(--text3)}
+/* STALKER */
+.stalker-input-row{display:flex;gap:8px;margin-bottom:12px}
+.stalker-input-row input{flex:1;background:var(--bg2);border:0.5px solid var(--border2);color:var(--text);padding:9px 12px;border-radius:8px;font-family:"Barlow Condensed",sans-serif;font-size:14px}
+.stalker-input-row input::placeholder{color:var(--text3)}
+.stalker-input-row input:focus{outline:none;border-color:var(--red)}
+.watch-list{display:flex;flex-direction:column;gap:6px}
+.watch-item{display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--bg2);border:0.5px solid var(--border2);border-radius:8px;transition:border-color .15s}
+.watch-item.is-online{border-color:rgba(0,230,118,.4);background:rgba(0,230,118,.04)}
+.w-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;letter-spacing:.5px}
+.w-avatar.on{background:rgba(0,230,118,.15);color:#00e676}
+.w-avatar.off{background:var(--bg3);color:var(--text3)}
+.w-name{font-size:14px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.w-gang{font-size:11px;color:var(--orange);font-weight:600;letter-spacing:.3px}
+.w-status.on{color:#00e676;font-size:12px;font-weight:700;display:flex;align-items:center;gap:4px}
+.w-status.off{color:var(--text3);font-size:12px;font-weight:600;display:flex;align-items:center;gap:4px}
+.w-sdot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.w-sdot.on{background:#00e676;animation:pulse 1.5s infinite}
+.w-sdot.off{background:var(--text3)}
+.w-dur{font-family:"Share Tech Mono",monospace;font-size:10px;color:var(--text3);margin-top:2px}
+.w-del{background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:18px;padding:0 2px;line-height:1;transition:color .15s;flex-shrink:0}
+.w-del:hover{color:var(--red)}
+.stalker-note{font-size:11px;color:var(--text3);margin-top:10px;display:flex;align-items:center;gap:6px;font-family:"Share Tech Mono",monospace}
+/* MOOD */
+.mood-card{background:var(--bg2);border:0.5px solid var(--border2);border-radius:10px;padding:20px;margin-bottom:14px;position:relative;overflow:hidden}
+.mood-card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px}
+.mood-card.chaos::before{background:linear-gradient(90deg,var(--red),var(--orange))}
+.mood-card.cop::before{background:linear-gradient(90deg,#4a9eff,#00e676)}
+.mood-card.chill::before{background:linear-gradient(90deg,#4a7ab5,#4a9eff)}
+.mood-card.hot::before{background:linear-gradient(90deg,var(--orange),var(--gold))}
+.mood-top{display:flex;align-items:center;gap:16px;margin-bottom:16px}
+.mood-emoji{font-size:52px;line-height:1;flex-shrink:0}
+.mood-title{font-size:26px;font-weight:800;color:#fff;letter-spacing:.5px;line-height:1}
+.mood-desc{font-size:13px;color:var(--text2);margin-top:5px;line-height:1.6}
+.mood-factors{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.mf{background:var(--bg3);border-radius:8px;padding:10px 12px;border:0.5px solid var(--border)}
+.mf-label{font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+.mf-val{font-size:14px;font-weight:700;color:var(--text)}
+.mf-bar{height:3px;background:var(--border);border-radius:2px;margin-top:6px;overflow:hidden}
+.mf-fill{height:100%;border-radius:2px;transition:width .8s}
 .toast{position:fixed;bottom:24px;right:24px;background:linear-gradient(135deg,var(--red),var(--orange));color:#fff;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:700;letter-spacing:.5px;z-index:10000;transform:translateY(60px);opacity:0;transition:all .3s;pointer-events:none}
 .toast.show{transform:translateY(0);opacity:1}
 .gang-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:16px}
@@ -195,6 +254,9 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
       <button class="tab active" onclick="switchTab('players',this)">⚔ Pemain</button>
       <button class="tab" onclick="switchTab('gangs',this)">🏴 Gang Stats</button>
       <button class="tab" onclick="switchTab('chart',this)">📊 Grafik</button>
+      <button class="tab" onclick="switchTab('seen',this)">👥 Pernah Online</button>
+      <button class="tab" onclick="switchTab('stalker',this)">👁 Stalker</button>
+      <button class="tab" onclick="switchTab('mood',this)">🎭 Server Mood</button>
       <button class="tab" onclick="switchTab('history',this)">🕐 History</button>
     </div>
     <button class="share-btn" onclick="shareLink()">
@@ -280,6 +342,62 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
     </div>
   </div>
 
+  <!-- TAB SEEN -->
+  <div class="section" id="tab-seen">
+    <div class="seen-stats">
+      <div class="seen-stat"><div class="seen-stat-val ora" id="seen-total">0</div><div class="seen-stat-lbl">Total Tercatat</div></div>
+      <div class="seen-stat"><div class="seen-stat-val g" id="seen-now">0</div><div class="seen-stat-lbl">Online Sekarang</div></div>
+      <div class="seen-stat"><div class="seen-stat-val red" id="seen-off">0</div><div class="seen-stat-lbl">Sudah Offline</div></div>
+      <div class="seen-stat"><div class="seen-stat-val" id="seen-gangs">0</div><div class="seen-stat-lbl">Gang Tercatat</div></div>
+    </div>
+    <div class="seen-controls">
+      <input class="seen-search" id="seenQ" type="text" placeholder="🔍 Cari nama pemain..." oninput="renderSeen()">
+      <div class="seen-filter">
+        <button class="sf act" onclick="setSFilter('all',this)">Semua</button>
+        <button class="sf" onclick="setSFilter('online',this)">Online</button>
+        <button class="sf" onclick="setSFilter('offline',this)">Offline</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <div class="seen-thead"><span>ID</span><span>Nama Pemain</span><span>Terakhir Online</span><span style="text-align:center">Status</span></div>
+      <div class="plist" id="seenList" style="max-height:440px">
+        <div class="empty" style="padding:40px"><span>Belum ada data.<br>Tunggu refresh pertama...</span></div>
+      </div>
+    </div>
+    <div style="margin-top:10px;font-size:11px;color:var(--text3);font-family:'Share Tech Mono',monospace;text-align:center">
+      Data tersimpan selama sesi browser terbuka • Terakumulasi setiap 30 detik
+    </div>
+  </div>
+
+  <!-- TAB STALKER -->
+  <div class="section" id="tab-stalker">
+    <div class="stalker-input-row">
+      <input type="text" id="watchInput" placeholder="Ketik nama karakter yang ingin dipantau... (contoh: moonlight - binyo)">
+      <button class="rbtn" style="padding:9px 16px;font-size:13px" onclick="addWatch()">+ PANTAU</button>
+    </div>
+    <div class="watch-list" id="watchList">
+      <div class="empty" style="padding:32px"><span>Belum ada pemain yang dipantau.<br>Tambahkan nama karakter di atas.</span></div>
+    </div>
+    <div class="stalker-note">🔔 Notifikasi browser akan muncul saat pemain masuk atau keluar server</div>
+  </div>
+
+  <!-- TAB MOOD -->
+  <div class="section" id="tab-mood">
+    <div class="mood-card" id="moodCard">
+      <div class="mood-top">
+        <div class="mood-emoji" id="moodEmoji">⏳</div>
+        <div>
+          <div class="mood-title" id="moodTitle">Menganalisis...</div>
+          <div class="mood-desc" id="moodDesc">Menunggu data dari server...</div>
+        </div>
+      </div>
+      <div class="mood-factors" id="moodFactors"></div>
+    </div>
+    <div style="font-size:11px;color:var(--text3);font-family:'Share Tech Mono',monospace;text-align:center">
+      Mood dianalisis otomatis berdasarkan: jumlah pemain, ping rata-rata, jumlah gang aktif • Update setiap refresh
+    </div>
+  </div>
+
   <!-- TAB HISTORY -->
   <div class="section" id="tab-history">
     <div class="history-wrap">
@@ -307,7 +425,7 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 <script>
 const TARGET='https://servers-frontend.fivem.net/api/servers/single/zrvmg4';
 const PROXIES=[u=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,u=>`https://corsproxy.io/?${encodeURIComponent(u)}`,u=>`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`];
-let allPlayers=[],chartData={labels:[],counts:[]},history=[],myChart=null,currentView='table';
+let allPlayers=[],chartData={labels:[],counts:[]},history=[],myChart=null,currentView='table',seenDB={},seenFilter='all';
 
 function pingInfo(p){
   if(!p||p<=0||p>2000)return{cls:'pr2',dot:'r',txt:'?'};
@@ -441,6 +559,7 @@ function switchTab(name,btn){
   btn.classList.add('active');
   if(name==='chart')updateChart();
   if(name==='gangs')buildGangStats(allPlayers);
+  if(name==='seen')renderSeen();
 }
 
 function updateChart(){
@@ -479,6 +598,263 @@ function renderHistory(){
   }).join('');
 }
 
+// ── STALKER MODE ──
+let watchList = [];
+
+function addWatch() {
+  const v = document.getElementById('watchInput').value.trim();
+  if (!v) return;
+  if (watchList.find(w => w.name.toLowerCase() === v.toLowerCase())) {
+    showToast('Pemain sudah ada di daftar pantau!');
+    return;
+  }
+  const {pfx} = parseName(v);
+  const initials = v.split(/[\s\-]+/).filter(Boolean).slice(0,2).map(p => (p[0]||'?').toUpperCase()).join('');
+  watchList.push({name:v, gang:pfx, online:false, sinceStr:'', initials, addedAt:new Date()});
+  document.getElementById('watchInput').value = '';
+  syncWatchStatus();
+  renderWatchList();
+  // Request notification permission
+  if (Notification && Notification.permission === 'default') Notification.requestPermission();
+}
+
+function removeWatch(i) {
+  watchList.splice(i, 1);
+  renderWatchList();
+}
+
+function syncWatchStatus() {
+  watchList.forEach(w => {
+    const found = allPlayers.find(p => (p.name||'').toLowerCase().includes(w.name.toLowerCase()) || w.name.toLowerCase().includes((p.name||'').toLowerCase()));
+    const wasOnline = w.online;
+    w.online = !!found;
+    if (found) {
+      w.id = found.id;
+      if (!wasOnline) {
+        w.sinceStr = new Date().toLocaleTimeString('id-ID');
+        sendNotif('🟢 ' + w.name + ' masuk server!', 'iMe RP — Stalker Mode');
+      }
+    } else {
+      if (wasOnline) {
+        sendNotif('🔴 ' + w.name + ' keluar server!', 'iMe RP — Stalker Mode');
+      }
+    }
+  });
+}
+
+function sendNotif(body, title) {
+  if (Notification && Notification.permission === 'granted') {
+    new Notification(title, {body, icon:'https://servers-frontend.fivem.net/favicon.ico'});
+  }
+}
+
+function renderWatchList() {
+  const el = document.getElementById('watchList');
+  if (!watchList.length) {
+    el.innerHTML = '<div class="empty" style="padding:32px"><span>Belum ada pemain yang dipantau.<br>Tambahkan nama karakter di atas.</span></div>';
+    return;
+  }
+  el.innerHTML = watchList.map((w,i) => {
+    const dur = w.online && w.sinceStr ? 'Sejak ' + w.sinceStr : w.online ? 'Online' : 'Tidak online';
+    return `<div class="watch-item ${w.online?'is-online':''}">
+      <div class="w-avatar ${w.online?'on':'off'}">${w.initials}</div>
+      <div style="flex:1;min-width:0">
+        <div class="w-name">${w.name}</div>
+        ${w.gang ? `<div class="w-gang">${w.gang}</div>` : ''}
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div class="w-status ${w.online?'on':'off'}">
+          <span class="w-sdot ${w.online?'on':'off'}"></span>
+          ${w.online ? 'Online #' + (w.id||'?') : 'Offline'}
+        </div>
+        <div class="w-dur">${dur}</div>
+      </div>
+      <button class="w-del" onclick="removeWatch(${i})" title="Hapus">×</button>
+    </div>`;
+  }).join('');
+}
+
+// ── SERVER MOOD ──
+function calcMood(players, maxC, avg) {
+  const online = players.length;
+  const pct = Math.round(online / maxC * 100);
+  const gangs = new Set(players.map(p => parseName(p.name).pfx).filter(Boolean)).size;
+  const polisi = players.filter(p => {
+    const g = (parseName(p.name).pfx || '').toLowerCase();
+    return g.includes('lspd') || g.includes('bcso') || g.includes('doc') || g.includes('polisi') || g.includes('swat') || g.includes('fib');
+  }).length;
+  const polisiRatio = online > 0 ? polisi / online : 0;
+
+  let mood;
+  if (pct >= 70 || avg >= 180) {
+    mood = {
+      key:'hot', emoji:'🔥', title:'Server Panas',
+      desc:`Server hampir penuh (${pct}% kapasitas) dengan ping rata-rata ${avg}ms. Kemungkinan besar ada event besar atau war sedang terjadi. Performa bisa terganggu.`,
+      factors:[
+        {l:'Kepadatan Server', v: pct+'% penuh ('+online+' pemain)', pct, col:'#ff3c3c'},
+        {l:'Avg Ping', v: avg+' ms', pct:Math.min(100,Math.round(avg/3)), col:'#ff8c00'},
+        {l:'Gang Aktif', v: gangs+' gang terdeteksi', pct:Math.min(100,gangs*3), col:'#ff8c00'},
+        {l:'Officer Online', v: polisi+' officer', pct:Math.round(polisiRatio*100), col:'#4a9eff'},
+      ]
+    };
+  } else if (polisiRatio >= 0.12) {
+    mood = {
+      key:'cop', emoji:'👮', title:'Polisi Dominan',
+      desc:`${polisi} officer dari ${online} pemain online (${Math.round(polisiRatio*100)}%). Instansi hukum mendominasi server. Aktivitas kriminal mungkin ditekan.`,
+      factors:[
+        {l:'Officer Online', v: polisi+' dari '+online+' pemain', pct:Math.round(polisiRatio*100), col:'#4a9eff'},
+        {l:'Kepadatan Server', v: pct+'% kapasitas', pct, col:'#4a9eff'},
+        {l:'Gang Aktif', v: gangs+' gang', pct:Math.min(100,gangs*3), col:'#ff8c00'},
+        {l:'Avg Ping', v: avg+' ms', pct:Math.min(100,Math.round(avg/3)), col:'#00e676'},
+      ]
+    };
+  } else if (pct <= 15 || online <= 100) {
+    mood = {
+      key:'chill', emoji:'😴', title:'Server Sepi',
+      desc:`Hanya ${online} pemain online (${pct}% kapasitas). Ping rata-rata ${avg}ms — sangat stabil. Waktu ideal untuk farming, balapan, atau RP santai.`,
+      factors:[
+        {l:'Pemain Online', v: online+' orang ('+pct+'%)', pct, col:'#4a7ab5'},
+        {l:'Avg Ping', v: avg+' ms — stabil', pct:Math.min(100,Math.round(avg/3)), col:'#00e676'},
+        {l:'Gang Aktif', v: gangs+' gang', pct:Math.min(100,gangs*3), col:'#4a7ab5'},
+        {l:'Slot Kosong', v: (maxC-online)+' slot tersedia', pct:100-pct, col:'#00e676'},
+      ]
+    };
+  } else if (gangs >= 20) {
+    mood = {
+      key:'chaos', emoji:'💣', title:'Chaos Mode',
+      desc:`${gangs} gang aktif sekarang dengan ${online} pemain. Server penuh aktivitas — siap-siap dengan situasi tidak terduga di mana saja.`,
+      factors:[
+        {l:'Gang Aktif', v: gangs+' gang terdeteksi', pct:Math.min(100,gangs*3), col:'#ff3c3c'},
+        {l:'Pemain Online', v: online+' orang ('+pct+'%)', pct, col:'#ff8c00'},
+        {l:'Avg Ping', v: avg+' ms', pct:Math.min(100,Math.round(avg/3)), col:'#ff8c00'},
+        {l:'Officer Online', v: polisi+' officer', pct:Math.round(polisiRatio*100), col:'#4a9eff'},
+      ]
+    };
+  } else {
+    mood = {
+      key:'normal', emoji:'😐', title:'Normal',
+      desc:`Server dalam kondisi normal dengan ${online} pemain (${pct}% kapasitas). Ping rata-rata ${avg}ms. Tidak ada aktivitas luar biasa yang terdeteksi.`,
+      factors:[
+        {l:'Pemain Online', v: online+' orang ('+pct+'%)', pct, col:'#4a9eff'},
+        {l:'Gang Aktif', v: gangs+' gang', pct:Math.min(100,gangs*3), col:'#ff8c00'},
+        {l:'Avg Ping', v: avg+' ms', pct:Math.min(100,Math.round(avg/3)), col:'#00e676'},
+        {l:'Officer Online', v: polisi+' officer', pct:Math.round(polisiRatio*100), col:'#4a9eff'},
+      ]
+    };
+  }
+  return mood;
+}
+
+function renderMood(mood) {
+  const card = document.getElementById('moodCard');
+  card.className = 'mood-card ' + mood.key;
+  document.getElementById('moodEmoji').textContent = mood.emoji;
+  document.getElementById('moodTitle').textContent = mood.title;
+  document.getElementById('moodDesc').textContent = mood.desc;
+  document.getElementById('moodFactors').innerHTML = mood.factors.map(f =>
+    `<div class="mf">
+      <div class="mf-label">${f.l}</div>
+      <div class="mf-val">${f.v}</div>
+      <div class="mf-bar"><div class="mf-fill" style="width:${f.pct}%;background:${f.col}"></div></div>
+    </div>`
+  ).join('');
+}
+
+// ── SEEN PLAYERS DB ──
+function updateSeenDB(players) {
+  const now = new Date();
+  const timeStr = now.toLocaleString('id-ID');
+  const currentIds = new Set(players.map(p => p.id));
+
+  // Mark all current players as seen
+  players.forEach(p => {
+    const key = String(p.id);
+    if (!seenDB[key]) {
+      seenDB[key] = {
+        id: p.id,
+        name: p.name || 'Unknown',
+        gang: parseName(p.name).pfx || '',
+        firstSeen: timeStr,
+        lastSeen: timeStr,
+        online: true,
+        seenCount: 1
+      };
+    } else {
+      seenDB[key].online = true;
+      seenDB[key].lastSeen = timeStr;
+      seenDB[key].name = p.name || seenDB[key].name;
+      seenDB[key].gang = parseName(p.name).pfx || seenDB[key].gang;
+      seenDB[key].seenCount = (seenDB[key].seenCount||1) + 1;
+    }
+  });
+
+  // Mark missing players as offline
+  Object.keys(seenDB).forEach(key => {
+    if (!currentIds.has(parseInt(key))) {
+      seenDB[key].online = false;
+    }
+  });
+
+  updateSeenStats();
+  renderSeen();
+}
+
+function updateSeenStats() {
+  const all = Object.values(seenDB);
+  const online = all.filter(p => p.online).length;
+  const gangs = new Set(all.map(p => p.gang).filter(Boolean)).size;
+  document.getElementById('seen-total').textContent = all.length.toLocaleString('id-ID');
+  document.getElementById('seen-now').textContent = online.toLocaleString('id-ID');
+  document.getElementById('seen-off').textContent = (all.length - online).toLocaleString('id-ID');
+  document.getElementById('seen-gangs').textContent = gangs.toLocaleString('id-ID');
+}
+
+function setSFilter(f, btn) {
+  seenFilter = f;
+  document.querySelectorAll('.sf').forEach(b => b.classList.remove('act'));
+  btn.classList.add('act');
+  renderSeen();
+}
+
+function renderSeen() {
+  const el = document.getElementById('seenList');
+  const q = (document.getElementById('seenQ').value || '').toLowerCase().trim();
+  let list = Object.values(seenDB);
+
+  // Filter by status
+  if (seenFilter === 'online') list = list.filter(p => p.online);
+  else if (seenFilter === 'offline') list = list.filter(p => !p.online);
+
+  // Filter by name
+  if (q) list = list.filter(p => (p.name||'').toLowerCase().includes(q) || (p.gang||'').toLowerCase().includes(q));
+
+  // Sort: online first, then by lastSeen desc
+  list.sort((a,b) => {
+    if (a.online !== b.online) return a.online ? -1 : 1;
+    return b.id - a.id;
+  });
+
+  if (!list.length) {
+    el.innerHTML = '<div class="empty" style="padding:32px"><span>Tidak ada data yang cocok.</span></div>';
+    return;
+  }
+
+  el.innerHTML = list.map(p => {
+    const {pfx, nm} = parseName(p.name);
+    return `<div class="seen-row">
+      <span class="pid">#${p.id}</span>
+      <span>
+        ${pfx ? `<div class="ppfx">${pfx}</div>` : ''}
+        <div class="pname" title="${p.name}">${nm || p.name}</div>
+      </span>
+      <span class="seen-time">${p.lastSeen}</span>
+      <span style="text-align:center">
+        <span class="seen-badge ${p.online?'on':'off'}">${p.online?'● Online':'○ Offline'}</span>
+      </span>
+    </div>`;
+  }).join('');
+}
+
 async function fetchData(){
   for(let i=-1;i<PROXIES.length;i++){
     try{
@@ -511,7 +887,7 @@ async function loadData(){
     document.getElementById('s4').textContent=avg+' ms';
     document.getElementById('sbar').style.width=pct+'%';
     addHistory(online);
-    allPlayers=players;filter();buildGangStats(players);
+    allPlayers=players;filter();buildGangStats(players);updateSeenDB(players);
     document.getElementById('ts').textContent='Update: '+new Date().toLocaleTimeString('id-ID')+' • Auto 30s';
   }catch(e){
     document.getElementById('sdot').className='sdot off';
