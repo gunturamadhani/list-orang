@@ -187,6 +187,10 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
         <span class="search-ico">🔍</span>
         <input type="text" id="sq" placeholder="Cari nama atau prefix (LSPD, BMC, SIN...)" oninput="filter()">
       </div>
+      <div class="search-wrap" style="max-width:190px">
+        <span class="search-ico" style="font-family:monospace;font-weight:700">#</span>
+        <input type="number" id="sqid" placeholder="ID kantong..." oninput="filter()" style="padding-left:28px">
+      </div>
       <select class="ctrl-select" id="ssort" onchange="filter()">
         <option value="id">Urut: ID</option>
         <option value="name">Urut: Nama A-Z</option>
@@ -343,8 +347,13 @@ function matchSearch(name,q){
 
 function filter(){
   const q=document.getElementById('sq').value.toLowerCase().trim();
+  const qid=document.getElementById('sqid').value.trim();
   const sort=document.getElementById('ssort').value;
-  let res=q?allPlayers.filter(p=>matchSearch(p.name,q)):[...allPlayers];
+  let res=[...allPlayers];
+  // Filter by nama
+  if(q) res=res.filter(p=>matchSearch(p.name,q));
+  // Filter by ID kantong (exact match atau startsWith jika belum selesai ketik)
+  if(qid) res=res.filter(p=>String(p.id)===qid||String(p.id).startsWith(qid));
   if(sort==='name')res.sort((a,b)=>(a.name||'').localeCompare(b.name||''));
   else if(sort==='ping_asc')res.sort((a,b)=>(a.ping||9999)-(b.ping||9999));
   else if(sort==='ping_desc')res.sort((a,b)=>(b.ping||0)-(a.ping||0));
