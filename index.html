@@ -224,15 +224,31 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
     window._fbListen = (path, cb) => onValue(ref(db, path), snap => cb(snap.val()));
 
     // Load seenDB from Firebase on start
+    let firstLoad = true;
     window._fbListen('seenPlayers', (data) => {
       if (data) {
         seenDB = data;
         updateSeenStats();
         renderSeen();
+        if(document.getElementById("stalkerDBList")) renderStalkerDB();
+      }
+      // Panggil loadData pertama kali SETELAH Firebase data tersedia
+      if (firstLoad) {
+        firstLoad = false;
+        window._firebaseReady = true;
+        loadData();
       }
     });
 
-    window._firebaseReady = true;
+    // Fallback: jika Firebase tidak ada data sama sekali (database kosong)
+    setTimeout(() => {
+      if (firstLoad) {
+        firstLoad = false;
+        window._firebaseReady = true;
+        loadData();
+      }
+    }, 3000);
+
     console.log('Firebase connected!');
   </script>
 </head>
@@ -338,6 +354,8 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
         <option value="name">Urut: Nama A-Z</option>
         <option value="ping_asc">Urut: Ping ↑</option>
         <option value="ping_desc">Urut: Ping ↓</option>
+        <option value="dur_desc">Urut: Durasi ↓ Terlama</option>
+        <option value="dur_asc">Urut: Durasi ↑ Terbaru</option>
       </select>
       <div class="view-toggle">
         <button class="vbtn active" onclick="setView('table',this)" title="Tabel">
@@ -407,6 +425,14 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
     </div>
     <div class="seen-controls">
       <input class="seen-search" id="seenQ" type="text" placeholder="🔍 Cari nama pemain..." oninput="renderSeen()">
+      <select class="ctrl-select" id="seenSort" onchange="renderSeen()" style="font-size:13px;padding:8px 10px">
+        <option value="status">Online Dulu</option>
+        <option value="dur_desc">Durasi ↓ Terlama</option>
+        <option value="dur_asc">Durasi ↑ Terbaru</option>
+        <option value="total_desc">Total Durasi ↓</option>
+        <option value="first_seen">Pertama Terlihat</option>
+        <option value="last_left">Terakhir Keluar</option>
+      </select>
       <div class="seen-filter">
         <button class="sf act" onclick="setSFilter('all',this)">Semua</button>
         <button class="sf" onclick="setSFilter('online',this)">Online</button>
@@ -600,6 +626,17 @@ function filter(){
   if(sort==='name')res.sort((a,b)=>(a.name||'').localeCompare(b.name||''));
   else if(sort==='ping_asc')res.sort((a,b)=>(a.ping||9999)-(b.ping||9999));
   else if(sort==='ping_desc')res.sort((a,b)=>(b.ping||0)-(a.ping||0));
+  else if(sort==='dur_desc'||sort==='dur_asc'){
+    const nowMs=Date.now();
+    res.sort((a,b)=>{
+      function getDur(p){
+        const k=(p.name||'unknown').toLowerCase().replace(/[^a-z0-9_]/g,'_').slice(0,80);
+        const db=seenDB[k];
+        return db&&db.sessionStartMs?nowMs-db.sessionStartMs:0;
+      }
+      return sort==='dur_desc'?getDur(b)-getDur(a):getDur(a)-getDur(b);
+    });
+  }
   else res.sort((a,b)=>a.id-b.id);
   document.getElementById('pcount').textContent=res.length.toLocaleString('id-ID');
   renderTable(res);renderCards(res);
@@ -913,10 +950,14 @@ async function updateSeenDB(players) {
     const existing = seenDB[key];
     const nowMs = now.getTime();
 
-    // Hitung sesi sekarang
-    let sessionStart = existing && existing.online && existing.sessionStartMs
-      ? existing.sessionStartMs
-      : nowMs;
+    // Pertahankan sessionStartMs dari Firebase jika pemain masih online
+    // Jika offline sebelumnya atau baru pertama → mulai sesi baru
+    let sessionStart;
+    if (existing && existing.sessionStartMs && existing.online) {
+      sessionStart = existing.sessionStartMs; // lanjut sesi yang sama
+    } else {
+      sessionStart = nowMs; // sesi baru (baru join / baru pertama terdeteksi)
+    }
 
     const entry = {
       name: p.name || 'Unknown',
@@ -996,11 +1037,38 @@ function renderSeen() {
   // Filter by name
   if (q) list = list.filter(p => (p.name||'').toLowerCase().includes(q) || (p.gang||'').toLowerCase().includes(q));
 
-  // Sort: online first, then by lastSeen desc
-  list.sort((a,b) => {
-    if (a.online !== b.online) return a.online ? -1 : 1;
-    return b.id - a.id;
-  });
+  // Sort sesuai pilihan
+  const seenSortEl = document.getElementById('seenSort');
+  const seenSortVal = seenSortEl ? seenSortEl.value : 'status';
+  const nowMs3 = Date.now();
+
+  function getSessMs(p) {
+    return p.online && p.sessionStartMs ? nowMs3 - p.sessionStartMs : 0;
+  }
+  function getTodayMs(p) {
+    return (p.todayDurMs || 0) + getSessMs(p);
+  }
+  function getTotalMs(p) {
+    return (p.totalDurMs || 0) + getSessMs(p);
+  }
+
+  if (seenSortVal === 'dur_desc') {
+    list.sort((a,b) => getTodayMs(b) - getTodayMs(a));
+  } else if (seenSortVal === 'dur_asc') {
+    list.sort((a,b) => getTodayMs(a) - getTodayMs(b));
+  } else if (seenSortVal === 'total_desc') {
+    list.sort((a,b) => getTotalMs(b) - getTotalMs(a));
+  } else if (seenSortVal === 'first_seen') {
+    list.sort((a,b) => (a.firstSeen||'').localeCompare(b.firstSeen||''));
+  } else if (seenSortVal === 'last_left') {
+    list.sort((a,b) => (b.lastLeft||'').localeCompare(a.lastLeft||''));
+  } else {
+    // Default: online dulu, lalu by durasi
+    list.sort((a,b) => {
+      if (a.online !== b.online) return a.online ? -1 : 1;
+      return getTodayMs(b) - getTodayMs(a);
+    });
+  }
 
   if (!list.length) {
     el.innerHTML = '<div class="empty" style="padding:32px"><span>Tidak ada data yang cocok.</span></div>';
@@ -1224,7 +1292,7 @@ setTimeout(() => {
   }
 }, 8000);
 
-loadData();
+// loadData() dipanggil oleh Firebase listener setelah data tersedia
 loadUrlParams();
 setInterval(loadData,30000);
 </script>
