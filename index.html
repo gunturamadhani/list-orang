@@ -123,6 +123,19 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 .owner img{width:22px;height:22px;border-radius:50%;border:0.5px solid var(--border2)}
 .toast{position:fixed;bottom:24px;right:24px;background:linear-gradient(135deg,var(--red),var(--orange));color:#fff;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:700;letter-spacing:.5px;z-index:10000;transform:translateY(60px);opacity:0;transition:all .3s;pointer-events:none}
 .toast.show{transform:translateY(0);opacity:1}
+.gang-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:16px}
+.gang-card{background:var(--bg2);border:0.5px solid var(--border2);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;cursor:pointer;transition:border-color .15s,background .15s;position:relative;overflow:hidden}
+.gang-card::before{content:"";position:absolute;top:0;left:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--red),var(--orange))}
+.gang-card:hover,.gang-card.active-filter{border-color:var(--orange);background:var(--bg3)}
+.gang-top{display:flex;align-items:center;justify-content:space-between;padding-left:8px}
+.gang-name{font-size:14px;font-weight:700;color:var(--text);letter-spacing:.5px}
+.gang-count{font-family:"Share Tech Mono",monospace;font-size:20px;font-weight:700;color:var(--orange)}
+.gang-bar{height:2px;background:var(--border);border-radius:1px;margin-top:8px;margin-left:8px;overflow:hidden}
+.gang-bar-fill{height:100%;background:linear-gradient(90deg,var(--red),var(--orange));border-radius:1px;transition:width .6s}
+.gang-solo{font-size:10px;color:var(--text3);margin-top:3px;padding-left:8px}
+.share-btn{background:var(--bg2);border:0.5px solid var(--border2);color:var(--text2);padding:7px 14px;border-radius:6px;cursor:pointer;font-family:"Barlow Condensed",sans-serif;font-size:13px;font-weight:700;letter-spacing:.5px;display:flex;align-items:center;gap:6px;transition:all .15s;text-transform:uppercase}
+.share-btn:hover{border-color:var(--orange);color:var(--orange)}
+.clear-gang-btn{background:linear-gradient(135deg,var(--red),var(--orange));border:none;color:#fff;font-size:11px;padding:3px 10px;border-radius:4px;font-weight:700;letter-spacing:.5px;cursor:pointer;font-family:"Barlow Condensed",sans-serif;display:none}
 </style>
 </head>
 <body>
@@ -174,10 +187,17 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
     </div>
   </div>
 
-  <div class="tabs">
-    <button class="tab active" onclick="switchTab('players',this)">⚔ Pemain</button>
-    <button class="tab" onclick="switchTab('chart',this)">📊 Grafik</button>
-    <button class="tab" onclick="switchTab('history',this)">🕐 History</button>
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px">
+    <div class="tabs" style="margin-bottom:0">
+      <button class="tab active" onclick="switchTab('players',this)">⚔ Pemain</button>
+      <button class="tab" onclick="switchTab('gangs',this)">🏴 Gang Stats</button>
+      <button class="tab" onclick="switchTab('chart',this)">📊 Grafik</button>
+      <button class="tab" onclick="switchTab('history',this)">🕐 History</button>
+    </div>
+    <button class="share-btn" onclick="shareLink()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      SHARE LINK
+    </button>
   </div>
 
   <!-- TAB PLAYERS -->
@@ -220,6 +240,26 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
     <div id="view-card" style="display:none">
       <div class="card-grid" id="plist-card">
         <div class="empty" style="grid-column:1/-1"><div class="loader"></div><span>Memuat data pemain...</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB GANG STATS -->
+  <div class="section" id="tab-gangs">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+      <div style="font-size:11px;color:var(--text2);letter-spacing:1px;text-transform:uppercase;font-weight:700">Gang / Instansi Online — klik untuk filter pemain</div>
+      <button class="clear-gang-btn" id="clearGangBtn" onclick="clearGangFilter()">✕ Hapus Filter</button>
+    </div>
+    <div class="gang-grid" id="gangGrid">
+      <div class="empty" style="grid-column:1/-1;padding:32px"><div class="loader"></div><span>Memuat data gang...</span></div>
+    </div>
+    <div style="margin-top:16px">
+      <div style="font-size:11px;color:var(--text2);letter-spacing:1px;text-transform:uppercase;font-weight:700;margin-bottom:10px">Pemain tanpa gang / instansi</div>
+      <div class="table-wrap">
+        <div class="thead"><span>ID</span><span>Nama Pemain</span><span style="text-align:center">Ping</span><span style="text-align:center">Aksi</span></div>
+        <div class="plist" id="soloList" style="max-height:220px">
+          <div class="empty" style="padding:24px"><span>Memuat...</span></div>
+        </div>
       </div>
     </div>
   </div>
@@ -376,6 +416,7 @@ function switchTab(name,btn){
   document.getElementById('tab-'+name).classList.add('active');
   btn.classList.add('active');
   if(name==='chart')updateChart();
+  if(name==='gangs')buildGangStats(allPlayers);
 }
 
 function updateChart(){
@@ -446,7 +487,7 @@ async function loadData(){
     document.getElementById('s4').textContent=avg+' ms';
     document.getElementById('sbar').style.width=pct+'%';
     addHistory(online);
-    allPlayers=players;filter();
+    allPlayers=players;filter();buildGangStats(players);
     document.getElementById('ts').textContent='Update: '+new Date().toLocaleTimeString('id-ID')+' • Auto 30s';
   }catch(e){
     document.getElementById('sdot').className='sdot off';
@@ -458,7 +499,116 @@ async function loadData(){
   btn.disabled=false;ico.classList.remove('spin');
 }
 
+// ── GANG STATS ──
+let activeGangFilter = null;
+
+function buildGangStats(players) {
+  const gangMap = {};
+  const solo = [];
+  players.forEach(p => {
+    const {pfx, nm} = parseName(p.name);
+    if (pfx) {
+      const key = pfx.toUpperCase();
+      if (!gangMap[key]) gangMap[key] = [];
+      gangMap[key].push(p);
+    } else {
+      solo.push(p);
+    }
+  });
+  // Sort by count desc
+  const sorted = Object.entries(gangMap).sort((a,b) => b[1].length - a[1].length);
+  const maxCount = sorted.length ? sorted[0][1].length : 1;
+  const grid = document.getElementById('gangGrid');
+  if (!sorted.length) {
+    grid.innerHTML = '<div class="empty" style="grid-column:1/-1;padding:32px"><span>Tidak ada data gang.</span></div>';
+  } else {
+    grid.innerHTML = sorted.map(([name, members]) => {
+      const pct = Math.round(members.length / maxCount * 100);
+      const isActive = activeGangFilter === name;
+      return `<div class="gang-card${isActive?' active-filter':''}" onclick="toggleGangFilter('${name.replace(/'/g,"\'")}',this)">
+        <div class="gang-top">
+          <span class="gang-name">${name}</span>
+          <span class="gang-count">${members.length}</span>
+        </div>
+        <div class="gang-solo">${members.length} anggota online</div>
+        <div class="gang-bar"><div class="gang-bar-fill" style="width:${pct}%"></div></div>
+      </div>`;
+    }).join('');
+  }
+  // Solo players
+  renderSoloList(solo);
+}
+
+function renderSoloList(players) {
+  const el = document.getElementById('soloList');
+  if (!players.length) {
+    el.innerHTML = '<div class="empty" style="padding:20px"><span>Semua pemain memiliki prefix gang.</span></div>';
+    return;
+  }
+  el.innerHTML = players.map(p => {
+    const pi = pingInfo(p.ping);
+    const fn = (p.name||'Unknown').replace(/'/g,"\'");
+    return `<div class="prow">
+      <span class="pid">#${p.id}</span>
+      <span><div class="pname">${p.name||'Unknown'}</div></span>
+      <span class="pping ${pi.cls}"><span class="pingdot ${pi.dot}"></span>${pi.txt} ms</span>
+      <span style="text-align:center"><button class="copy-btn" onclick="copyName('${fn}',this)">COPY</button></span>
+    </div>`;
+  }).join('');
+}
+
+function toggleGangFilter(name, el) {
+  if (activeGangFilter === name) {
+    clearGangFilter();
+    return;
+  }
+  activeGangFilter = name;
+  document.getElementById('clearGangBtn').style.display = 'inline-flex';
+  document.querySelectorAll('.gang-card').forEach(c => c.classList.remove('active-filter'));
+  el.classList.add('active-filter');
+  // Switch to players tab and apply filter
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-players').classList.add('active');
+  document.querySelectorAll('.tab')[0].classList.add('active');
+  document.getElementById('sq').value = name;
+  filter();
+  showToast('Filter gang: ' + name);
+}
+
+function clearGangFilter() {
+  activeGangFilter = null;
+  document.getElementById('clearGangBtn').style.display = 'none';
+  document.getElementById('sq').value = '';
+  document.getElementById('sqid').value = '';
+  filter();
+  buildGangStats(allPlayers);
+}
+
+// ── SHARE LINK ──
+function shareLink() {
+  const q = document.getElementById('sq').value.trim();
+  const qid = document.getElementById('sqid').value.trim();
+  const params = new URLSearchParams();
+  if (q) params.set('gang', q);
+  if (qid) params.set('id', qid);
+  const url = window.location.origin + window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+  navigator.clipboard.writeText(url).then(() => {
+    showToast('Link disalin! Bagikan ke teman kamu.');
+  });
+}
+
+// ── LOAD URL PARAMS ──
+function loadUrlParams() {
+  const params = new URLSearchParams(window.location.search);
+  const gang = params.get('gang');
+  const id = params.get('id');
+  if (gang) { document.getElementById('sq').value = gang; }
+  if (id) { document.getElementById('sqid').value = id; }
+}
+
 loadData();
+loadUrlParams();
 setInterval(loadData,30000);
 </script>
 </body>
