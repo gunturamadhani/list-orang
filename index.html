@@ -414,7 +414,7 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
       </div>
     </div>
     <div class="table-wrap">
-      <div class="seen-thead" style="grid-template-columns:64px 1fr 130px 130px 100px"><span>ID</span><span>Nama Pemain</span><span>Pertama Terlihat</span><span>Terakhir Keluar</span><span style="text-align:center">Status</span></div>
+      <div class="seen-thead" style="grid-template-columns:1fr 130px 130px 100px"><span>Nama Pemain</span><span>Pertama Terlihat</span><span>Terakhir Keluar</span><span style="text-align:center">Status</span></div>
       <div class="plist" id="seenList" style="max-height:440px">
         <div class="empty" style="padding:40px"><span>Belum ada data.<br>Tunggu refresh pertama...</span></div>
       </div>
@@ -440,7 +440,7 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
         </select>
       </div>
       <div class="table-wrap">
-        <div class="seen-thead" style="grid-template-columns:64px 1fr 120px 90px"><span>ID</span><span>Nama Pemain</span><span>Status</span><span style="text-align:center">Pantau</span></div>
+        <div class="seen-thead" style="grid-template-columns:1fr 120px 90px"><span>Nama Pemain</span><span>Status</span><span style="text-align:center">Pantau</span></div>
         <div class="plist" id="stalkerDBList" style="max-height:240px">
           <div class="empty" style="padding:24px"><span>Memuat database...</span></div>
         </div>
@@ -677,8 +677,7 @@ function renderStalkerDB() {
   el.innerHTML = list.map(p => {
     const {pfx,nm} = parseName(p.name);
     const isWatching = watching.has((p.name||'').toLowerCase());
-    return `<div class="seen-row" style="grid-template-columns:64px 1fr 120px 90px">
-      <span class="pid">#${p.id}</span>
+    return `<div class="seen-row" style="grid-template-columns:1fr 120px 90px">
       <span>
         ${pfx?`<div class="ppfx">${pfx}</div>`:''}
         <div class="pname">${nm||p.name}</div>
@@ -874,15 +873,24 @@ function renderMood(mood) {
 async function updateSeenDB(players) {
   const now = new Date();
   const timeStr = now.toLocaleString('id-ID');
-  const currentIds = new Set(players.map(p => p.id));
+
+  // Gunakan nama sebagai key (bukan ID karena ID berubah tiap join)
+  // Bersihkan nama jadi key yang aman untuk Firebase (hapus karakter terlarang)
+  function nameToKey(name) {
+    return (name || 'unknown')
+      .toLowerCase()
+      .replace(/[^a-z0-9_]/g, '_')
+      .slice(0, 80);
+  }
+
+  const currentKeys = new Set(players.map(p => nameToKey(p.name)));
   const updates = {};
 
-  // Mark all current players as seen/update
+  // Tandai semua pemain yang sedang online
   players.forEach(p => {
-    const key = 'p' + String(p.id);
+    const key = nameToKey(p.name);
     const existing = seenDB[key];
     const entry = {
-      id: p.id,
       name: p.name || 'Unknown',
       gang: parseName(p.name).pfx || '',
       firstSeen: existing ? existing.firstSeen : timeStr,
@@ -890,21 +898,22 @@ async function updateSeenDB(players) {
       online: true,
       seenCount: existing ? (existing.seenCount || 1) + 1 : 1
     };
+    // Pertahankan lastLeft jika sudah ada sebelumnya
+    if (existing && existing.lastLeft) entry.lastLeft = existing.lastLeft;
     seenDB[key] = entry;
     updates[key] = entry;
   });
 
-  // Mark missing players as offline + record lastLeft
+  // Tandai pemain yang tidak ada lagi sebagai offline + catat waktu keluar
   Object.keys(seenDB).forEach(key => {
-    const id = parseInt(key.replace('p',''));
-    if (!currentIds.has(id) && seenDB[key].online) {
+    if (!currentKeys.has(key) && seenDB[key].online) {
       seenDB[key].online = false;
       seenDB[key].lastLeft = timeStr;
       updates[key] = { ...seenDB[key], online: false, lastLeft: timeStr };
     }
   });
 
-  // Save to Firebase
+  // Simpan ke Firebase
   if (window._fbUpdate && Object.keys(updates).length > 0) {
     try {
       await window._fbUpdate('seenPlayers', updates);
@@ -960,14 +969,13 @@ function renderSeen() {
 
   el.innerHTML = list.map(p => {
     const {pfx, nm} = parseName(p.name);
-    return `<div class="seen-row" style="grid-template-columns:64px 1fr 130px 130px 100px">
-      <span class="pid">#${p.id}</span>
+    return `<div class="seen-row" style="grid-template-columns:1fr 130px 130px 100px">
       <span>
         ${pfx ? `<div class="ppfx">${pfx}</div>` : ''}
         <div class="pname" title="${p.name}">${nm || p.name}</div>
       </span>
       <span class="seen-time">${p.firstSeen || '—'}</span>
-      <span class="seen-time">${p.online ? '—' : (p.lastLeft || p.lastSeen || '—')}</span>
+      <span class="seen-time">${p.online ? '—' : (p.lastLeft || '—')}</span>
       <span style="text-align:center">
         <span class="seen-badge ${p.online?'on':'off'}">${p.online?'● Online':'○ Offline'}</span>
       </span>
