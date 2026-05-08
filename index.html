@@ -199,6 +199,42 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 .share-btn:hover{border-color:var(--orange);color:var(--orange)}
 .clear-gang-btn{background:linear-gradient(135deg,var(--red),var(--orange));border:none;color:#fff;font-size:11px;padding:3px 10px;border-radius:4px;font-weight:700;letter-spacing:.5px;cursor:pointer;font-family:"Barlow Condensed",sans-serif;display:none}
 </style>
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, set, get, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDcJb0i2C_BeTm7laZ6vDIscFC1R6gjeoU",
+      authDomain: "list-player-f0e00.firebaseapp.com",
+      databaseURL: "https://list-player-f0e00-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "list-player-f0e00",
+      storageBucket: "list-player-f0e00.firebasestorage.app",
+      messagingSenderId: "92008883411",
+      appId: "1:92008883411:web:2f4be93f79136616b8e026"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // Expose DB functions to global scope
+    window._fbSet = (path, data) => set(ref(db, path), data);
+    window._fbUpdate = (path, data) => update(ref(db, path), data);
+    window._fbGet = (path) => get(ref(db, path));
+    window._fbListen = (path, cb) => onValue(ref(db, path), snap => cb(snap.val()));
+
+    // Load seenDB from Firebase on start
+    window._fbListen('seenPlayers', (data) => {
+      if (data) {
+        seenDB = data;
+        updateSeenStats();
+        renderSeen();
+      }
+    });
+
+    window._firebaseReady = true;
+    console.log('Firebase connected!');
+  </script>
 </head>
 <body>
 <div class="wrap">
@@ -215,6 +251,10 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
       <div class="status-badge">
         <div class="sdot" id="sdot"></div>
         <span id="sstatus">Menghubungkan...</span>
+      </div>
+      <div class="status-badge" id="fbBadge" style="font-size:11px">
+        <div class="sdot off" id="fbDot"></div>
+        <span id="fbStatus">Firebase...</span>
       </div>
       <button class="rbtn" id="rbtn" onclick="loadData()">
         <svg id="rico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0018.49 15"/></svg>
@@ -237,10 +277,26 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
       <div class="stat-val ora" id="s2">—</div>
       <div class="stat-sub">total slot tersedia</div>
     </div>
+    <div class="stat" style="border-color:rgba(74,158,255,.3)">
+      <div class="stat-label" style="color:#4a9eff">👮 LSPD Online</div>
+      <div class="stat-val" style="color:#4a9eff" id="s-lspd">—</div>
+      <div class="stat-sub" id="s-lspd-sub">Los Santos Police Dept</div>
+      <div class="fill-bar"><div class="fill-inner" id="sbar-lspd" style="width:0%;background:linear-gradient(90deg,#4a9eff,#00e676)"></div></div>
+    </div>
+    <div class="stat" style="border-color:rgba(180,100,255,.3)">
+      <div class="stat-label" style="color:#b464ff">🚔 LSSD Online</div>
+      <div class="stat-val" style="color:#b464ff" id="s-lssd">—</div>
+      <div class="stat-sub" id="s-lssd-sub">Los Santos Sheriff Dept</div>
+      <div class="fill-bar"><div class="fill-inner" id="sbar-lssd" style="width:0%;background:linear-gradient(90deg,#b464ff,#4a9eff)"></div></div>
+    </div>
+  </div>
+  <!-- Baris kedua: Slot Kosong & Avg Ping -->
+  <div class="stats" style="grid-template-columns:repeat(2,1fr);margin-top:-4px;margin-bottom:16px">
     <div class="stat">
       <div class="stat-label">Slot Kosong</div>
       <div class="stat-val" id="s3">—</div>
       <div class="stat-sub" id="s3sub">memuat...</div>
+      <div class="fill-bar" style="margin-top:8px"><div class="fill-inner" id="sbar2" style="width:0%;background:linear-gradient(90deg,#4a9eff,#00e676)"></div></div>
     </div>
     <div class="stat">
       <div class="stat-label">Avg Ping</div>
@@ -256,7 +312,6 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
       <button class="tab" onclick="switchTab('chart',this)">📊 Grafik</button>
       <button class="tab" onclick="switchTab('seen',this)">👥 Pernah Online</button>
       <button class="tab" onclick="switchTab('stalker',this)">👁 Stalker</button>
-      <button class="tab" onclick="switchTab('mood',this)">🎭 Server Mood</button>
       <button class="tab" onclick="switchTab('history',this)">🕐 History</button>
     </div>
     <button class="share-btn" onclick="shareLink()">
@@ -359,44 +414,46 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
       </div>
     </div>
     <div class="table-wrap">
-      <div class="seen-thead"><span>ID</span><span>Nama Pemain</span><span>Terakhir Online</span><span style="text-align:center">Status</span></div>
+      <div class="seen-thead" style="grid-template-columns:64px 1fr 130px 130px 100px"><span>ID</span><span>Nama Pemain</span><span>Pertama Terlihat</span><span>Terakhir Keluar</span><span style="text-align:center">Status</span></div>
       <div class="plist" id="seenList" style="max-height:440px">
         <div class="empty" style="padding:40px"><span>Belum ada data.<br>Tunggu refresh pertama...</span></div>
       </div>
     </div>
     <div style="margin-top:10px;font-size:11px;color:var(--text3);font-family:'Share Tech Mono',monospace;text-align:center">
-      Data tersimpan selama sesi browser terbuka • Terakumulasi setiap 30 detik
+      Data tersimpan permanen di Firebase • Terakumulasi setiap 30 detik
     </div>
   </div>
 
   <!-- TAB STALKER -->
   <div class="section" id="tab-stalker">
-    <div class="stalker-input-row">
-      <input type="text" id="watchInput" placeholder="Ketik nama karakter yang ingin dipantau... (contoh: moonlight - binyo)">
-      <button class="rbtn" style="padding:9px 16px;font-size:13px" onclick="addWatch()">+ PANTAU</button>
-    </div>
-    <div class="watch-list" id="watchList">
-      <div class="empty" style="padding:32px"><span>Belum ada pemain yang dipantau.<br>Tambahkan nama karakter di atas.</span></div>
-    </div>
-    <div class="stalker-note">🔔 Notifikasi browser akan muncul saat pemain masuk atau keluar server</div>
-  </div>
-
-  <!-- TAB MOOD -->
-  <div class="section" id="tab-mood">
-    <div class="mood-card" id="moodCard">
-      <div class="mood-top">
-        <div class="mood-emoji" id="moodEmoji">⏳</div>
-        <div>
-          <div class="mood-title" id="moodTitle">Menganalisis...</div>
-          <div class="mood-desc" id="moodDesc">Menunggu data dari server...</div>
+    <div style="margin-bottom:12px">
+      <div style="font-size:11px;color:var(--text2);letter-spacing:1px;text-transform:uppercase;font-weight:700;margin-bottom:8px">Pilih dari database pemain yang pernah terdeteksi:</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <div class="search-wrap" style="flex:1;min-width:200px">
+          <span class="search-ico">🔍</span>
+          <input type="text" id="stalkerSearch" placeholder="Cari nama dari database..." oninput="renderStalkerDB()">
+        </div>
+        <select class="ctrl-select" id="stalkerFilter" onchange="renderStalkerDB()">
+          <option value="all">Semua</option>
+          <option value="online">Online Sekarang</option>
+          <option value="offline">Offline</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <div class="seen-thead" style="grid-template-columns:64px 1fr 120px 90px"><span>ID</span><span>Nama Pemain</span><span>Status</span><span style="text-align:center">Pantau</span></div>
+        <div class="plist" id="stalkerDBList" style="max-height:240px">
+          <div class="empty" style="padding:24px"><span>Memuat database...</span></div>
         </div>
       </div>
-      <div class="mood-factors" id="moodFactors"></div>
     </div>
-    <div style="font-size:11px;color:var(--text3);font-family:'Share Tech Mono',monospace;text-align:center">
-      Mood dianalisis otomatis berdasarkan: jumlah pemain, ping rata-rata, jumlah gang aktif • Update setiap refresh
+    <div style="font-size:11px;color:var(--text2);letter-spacing:1px;text-transform:uppercase;font-weight:700;margin-bottom:8px;margin-top:16px">Daftar Pantau Aktif:</div>
+    <div class="watch-list" id="watchList">
+      <div class="empty" style="padding:24px"><span>Belum ada pemain yang dipantau.</span></div>
     </div>
+    <div class="stalker-note">🔔 Notifikasi browser muncul saat pemain masuk atau keluar server</div>
   </div>
+
+
 
   <!-- TAB HISTORY -->
   <div class="section" id="tab-history">
@@ -560,6 +617,7 @@ function switchTab(name,btn){
   if(name==='chart')updateChart();
   if(name==='gangs')buildGangStats(allPlayers);
   if(name==='seen')renderSeen();
+  if(name==='stalker'){renderStalkerDB();}
 }
 
 function updateChart(){
@@ -600,6 +658,58 @@ function renderHistory(){
 
 // ── STALKER MODE ──
 let watchList = [];
+
+function renderStalkerDB() {
+  const el = document.getElementById('stalkerDBList');
+  if (!el) return;
+  const q = (document.getElementById('stalkerSearch').value || '').toLowerCase().trim();
+  const f = document.getElementById('stalkerFilter').value;
+  let list = Object.values(seenDB);
+  if (f === 'online') list = list.filter(p => p.online);
+  else if (f === 'offline') list = list.filter(p => !p.online);
+  if (q) list = list.filter(p => (p.name||'').toLowerCase().includes(q) || (p.gang||'').toLowerCase().includes(q));
+  list.sort((a,b) => a.online===b.online ? 0 : a.online ? -1 : 1);
+  if (!list.length) {
+    el.innerHTML = '<div class="empty" style="padding:24px"><span>Tidak ada pemain di database.</span></div>';
+    return;
+  }
+  const watching = new Set(watchList.map(w => w.name.toLowerCase()));
+  el.innerHTML = list.map(p => {
+    const {pfx,nm} = parseName(p.name);
+    const isWatching = watching.has((p.name||'').toLowerCase());
+    return `<div class="seen-row" style="grid-template-columns:64px 1fr 120px 90px">
+      <span class="pid">#${p.id}</span>
+      <span>
+        ${pfx?`<div class="ppfx">${pfx}</div>`:''}
+        <div class="pname">${nm||p.name}</div>
+      </span>
+      <span style="text-align:center"><span class="seen-badge ${p.online?'on':'off'}">${p.online?'● Online':'○ Offline'}</span></span>
+      <span style="text-align:center">
+        ${isWatching
+          ? `<button class="copy-btn copied" onclick="removeWatchByName('${(p.name||'').replace(/'/g,"\'")}',this)">✓ Dipantau</button>`
+          : `<button class="copy-btn" onclick="addWatchFromDB('${(p.name||'').replace(/'/g,"\'")}',this)">+ Pantau</button>`
+        }
+      </span>
+    </div>`;
+  }).join('');
+}
+
+function addWatchFromDB(name, btn) {
+  if (watchList.find(w => w.name.toLowerCase() === name.toLowerCase())) return;
+  const {pfx} = parseName(name);
+  const initials = name.split(/[\s\-]+/).filter(Boolean).slice(0,2).map(p=>(p[0]||'?').toUpperCase()).join('');
+  watchList.push({name, gang:pfx, online:false, sinceStr:'', initials, addedAt:new Date()});
+  syncWatchStatus();
+  renderWatchList();
+  renderStalkerDB();
+  if (Notification && Notification.permission === 'default') Notification.requestPermission();
+  showToast('Memantau: ' + name.slice(0,24));
+}
+
+function removeWatchByName(name, btn) {
+  const idx = watchList.findIndex(w => w.name.toLowerCase() === name.toLowerCase());
+  if (idx !== -1) { watchList.splice(idx, 1); renderWatchList(); renderStalkerDB(); }
+}
 
 function addWatch() {
   const v = document.getElementById('watchInput').value.trim();
@@ -761,42 +871,51 @@ function renderMood(mood) {
 }
 
 // ── SEEN PLAYERS DB ──
-function updateSeenDB(players) {
+async function updateSeenDB(players) {
   const now = new Date();
   const timeStr = now.toLocaleString('id-ID');
   const currentIds = new Set(players.map(p => p.id));
+  const updates = {};
 
-  // Mark all current players as seen
+  // Mark all current players as seen/update
   players.forEach(p => {
-    const key = String(p.id);
-    if (!seenDB[key]) {
-      seenDB[key] = {
-        id: p.id,
-        name: p.name || 'Unknown',
-        gang: parseName(p.name).pfx || '',
-        firstSeen: timeStr,
-        lastSeen: timeStr,
-        online: true,
-        seenCount: 1
-      };
-    } else {
-      seenDB[key].online = true;
-      seenDB[key].lastSeen = timeStr;
-      seenDB[key].name = p.name || seenDB[key].name;
-      seenDB[key].gang = parseName(p.name).pfx || seenDB[key].gang;
-      seenDB[key].seenCount = (seenDB[key].seenCount||1) + 1;
+    const key = 'p' + String(p.id);
+    const existing = seenDB[key];
+    const entry = {
+      id: p.id,
+      name: p.name || 'Unknown',
+      gang: parseName(p.name).pfx || '',
+      firstSeen: existing ? existing.firstSeen : timeStr,
+      lastSeen: timeStr,
+      online: true,
+      seenCount: existing ? (existing.seenCount || 1) + 1 : 1
+    };
+    seenDB[key] = entry;
+    updates[key] = entry;
+  });
+
+  // Mark missing players as offline + record lastLeft
+  Object.keys(seenDB).forEach(key => {
+    const id = parseInt(key.replace('p',''));
+    if (!currentIds.has(id) && seenDB[key].online) {
+      seenDB[key].online = false;
+      seenDB[key].lastLeft = timeStr;
+      updates[key] = { ...seenDB[key], online: false, lastLeft: timeStr };
     }
   });
 
-  // Mark missing players as offline
-  Object.keys(seenDB).forEach(key => {
-    if (!currentIds.has(parseInt(key))) {
-      seenDB[key].online = false;
+  // Save to Firebase
+  if (window._fbUpdate && Object.keys(updates).length > 0) {
+    try {
+      await window._fbUpdate('seenPlayers', updates);
+    } catch(e) {
+      console.warn('Firebase update failed:', e);
     }
-  });
+  }
 
   updateSeenStats();
   renderSeen();
+  if(document.getElementById("stalkerDBList"))renderStalkerDB();
 }
 
 function updateSeenStats() {
@@ -841,13 +960,14 @@ function renderSeen() {
 
   el.innerHTML = list.map(p => {
     const {pfx, nm} = parseName(p.name);
-    return `<div class="seen-row">
+    return `<div class="seen-row" style="grid-template-columns:64px 1fr 130px 130px 100px">
       <span class="pid">#${p.id}</span>
       <span>
         ${pfx ? `<div class="ppfx">${pfx}</div>` : ''}
         <div class="pname" title="${p.name}">${nm || p.name}</div>
       </span>
-      <span class="seen-time">${p.lastSeen}</span>
+      <span class="seen-time">${p.firstSeen || '—'}</span>
+      <span class="seen-time">${p.online ? '—' : (p.lastLeft || p.lastSeen || '—')}</span>
       <span style="text-align:center">
         <span class="seen-badge ${p.online?'on':'off'}">${p.online?'● Online':'○ Offline'}</span>
       </span>
@@ -886,6 +1006,20 @@ async function loadData(){
     document.getElementById('s3sub').textContent=Math.round(slots/maxC*100)+'% slot masih kosong';
     document.getElementById('s4').textContent=avg+' ms';
     document.getElementById('sbar').style.width=pct+'%';
+    // Slot kosong bar (sisa %)
+    const slotPct=Math.round(slots/maxC*100);
+    document.getElementById('sbar2').style.width=slotPct+'%';
+    // LSPD & LSSD stats
+    const lspdPlayers=players.filter(p=>{const g=(parseName(p.name).pfx||'').toLowerCase();return g==='lspd'||g.startsWith('lspd');});
+    const lssdPlayers=players.filter(p=>{const g=(parseName(p.name).pfx||'').toLowerCase();return g==='lssd'||g.startsWith('lssd');});
+    const totalCop=lspdPlayers.length+lssdPlayers.length;
+    document.getElementById('s-lspd').textContent=lspdPlayers.length;
+    document.getElementById('s-lspd-sub').textContent=lspdPlayers.length+' officer aktif';
+    document.getElementById('s-lssd').textContent=lssdPlayers.length;
+    document.getElementById('s-lssd-sub').textContent=lssdPlayers.length+' officer aktif';
+    const maxCop=Math.max(1,Math.max(lspdPlayers.length,lssdPlayers.length));
+    document.getElementById('sbar-lspd').style.width=Math.round(lspdPlayers.length/Math.max(1,totalCop)*100)+'%';
+    document.getElementById('sbar-lssd').style.width=Math.round(lssdPlayers.length/Math.max(1,totalCop)*100)+'%';
     addHistory(online);
     allPlayers=players;filter();buildGangStats(players);updateSeenDB(players);
     document.getElementById('ts').textContent='Update: '+new Date().toLocaleTimeString('id-ID')+' • Auto 30s';
@@ -1010,6 +1144,24 @@ function loadUrlParams() {
   if (gang) { document.getElementById('sq').value = gang; document.getElementById('clearSq').style.display='flex'; document.getElementById('sq').classList.add('has-val'); }
   if (id) { document.getElementById('sqid').value = id; document.getElementById('clearSqid').style.display='flex'; document.getElementById('sqid').classList.add('has-val'); }
 }
+
+// Check Firebase connection status
+let fbCheckInterval = setInterval(() => {
+  if (window._firebaseReady) {
+    document.getElementById('fbDot').className = 'sdot on';
+    document.getElementById('fbStatus').textContent = 'Firebase ✓';
+    clearInterval(fbCheckInterval);
+  }
+}, 500);
+
+// Timeout if Firebase never connects
+setTimeout(() => {
+  if (!window._firebaseReady) {
+    document.getElementById('fbDot').className = 'sdot off';
+    document.getElementById('fbStatus').textContent = 'Firebase ✗';
+    clearInterval(fbCheckInterval);
+  }
+}, 8000);
 
 loadData();
 loadUrlParams();
