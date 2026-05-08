@@ -352,7 +352,7 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 
     <div id="view-table">
       <div class="table-wrap">
-        <div class="thead"><span>ID</span><span>Nama Pemain</span><span style="text-align:center">Ping</span><span style="text-align:center">Aksi</span></div>
+        <div class="thead" style="grid-template-columns:64px 1fr 100px 110px 90px"><span>ID</span><span>Nama Pemain</span><span style="text-align:center">Ping</span><span style="text-align:center">Durasi</span><span style="text-align:center">Aksi</span></div>
         <div class="plist" id="plist-table">
           <div class="empty"><div class="loader"></div><span>Memuat data pemain...</span></div>
         </div>
@@ -378,7 +378,7 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
     <div style="margin-top:16px">
       <div style="font-size:11px;color:var(--text2);letter-spacing:1px;text-transform:uppercase;font-weight:700;margin-bottom:10px">Pemain tanpa gang / instansi</div>
       <div class="table-wrap">
-        <div class="thead"><span>ID</span><span>Nama Pemain</span><span style="text-align:center">Ping</span><span style="text-align:center">Aksi</span></div>
+        <div class="thead" style="grid-template-columns:64px 1fr 100px 110px 90px"><span>ID</span><span>Nama Pemain</span><span style="text-align:center">Ping</span><span style="text-align:center">Durasi</span><span style="text-align:center">Aksi</span></div>
         <div class="plist" id="soloList" style="max-height:220px">
           <div class="empty" style="padding:24px"><span>Memuat...</span></div>
         </div>
@@ -414,7 +414,7 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
       </div>
     </div>
     <div class="table-wrap">
-      <div class="seen-thead" style="grid-template-columns:1fr 130px 130px 100px"><span>Nama Pemain</span><span>Pertama Terlihat</span><span>Terakhir Keluar</span><span style="text-align:center">Status</span></div>
+      <div class="seen-thead" style="grid-template-columns:1fr 130px 130px 160px 100px"><span>Nama Pemain</span><span>Pertama Terlihat</span><span>Terakhir Keluar</span><span style="text-align:center">Durasi</span><span style="text-align:center">Status</span></div>
       <div class="plist" id="seenList" style="max-height:440px">
         <div class="empty" style="padding:40px"><span>Belum ada data.<br>Tunggu refresh pertama...</span></div>
       </div>
@@ -522,10 +522,14 @@ function renderTable(players){
   if(!players.length){el.innerHTML='<div class="empty"><span>⚠️ Tidak ada pemain ditemukan</span></div>';return;}
   el.innerHTML=players.map(p=>{
     const pi=pingInfo(p.ping),{pfx,nm}=parseName(p.name),fn=(p.name||'Unknown').replace(/'/g,"\\'");
-    return`<div class="prow">
+    const dbKey=(p.name||'unknown').toLowerCase().replace(/[^a-z0-9_]/g,'_').slice(0,80);
+    const dbEntry=seenDB[dbKey];
+    const sessDur=dbEntry&&dbEntry.sessionStartMs?formatDur(Date.now()-dbEntry.sessionStartMs):'—';
+    return`<div class="prow" style="grid-template-columns:64px 1fr 100px 110px 90px">
       <span class="pid">#${p.id}</span>
       <span>${pfx?`<div class="ppfx">${pfx}</div>`:''}<div class="pname" title="${p.name||''}">${nm||p.name||'Unknown'}</div></span>
       <span class="pping ${pi.cls}"><span class="pingdot ${pi.dot}"></span>${pi.txt} ms</span>
+      <span style="text-align:center;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--gold)">${sessDur}</span>
       <span style="text-align:center"><button class="copy-btn" onclick="copyName('${fn}',this)">COPY</button></span>
     </div>`;
   }).join('');
@@ -654,6 +658,23 @@ function renderHistory(){
     const dh=i===history.length-1?'':h.delta>0?`<span class="hdelta up">▲ +${h.delta}</span>`:h.delta<0?`<span class="hdelta dn">▼ ${h.delta}</span>`:`<span class="hdelta" style="color:var(--text3)">— sama</span>`;
     return`<div class="hrow"><span class="htime">${h.time}</span><span class="hcount">${h.count.toLocaleString('id-ID')} pemain</span>${dh}</div>`;
   }).join('');
+}
+
+// ── DURASI HELPERS ──
+function formatDur(ms) {
+  if (!ms || ms < 0) return '—';
+  const totalSec = Math.floor(ms / 1000);
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  if (h > 0) return h + 'j ' + m + 'm';
+  if (m > 0) return m + 'm ' + s + 'd';
+  return s + 'd';
+}
+
+function formatDurMs(ms) {
+  if (!ms || ms < 0) return 0;
+  return ms;
 }
 
 // ── STALKER MODE ──
@@ -890,26 +911,45 @@ async function updateSeenDB(players) {
   players.forEach(p => {
     const key = nameToKey(p.name);
     const existing = seenDB[key];
+    const nowMs = now.getTime();
+
+    // Hitung sesi sekarang
+    let sessionStart = existing && existing.online && existing.sessionStartMs
+      ? existing.sessionStartMs
+      : nowMs;
+
     const entry = {
       name: p.name || 'Unknown',
       gang: parseName(p.name).pfx || '',
       firstSeen: existing ? existing.firstSeen : timeStr,
       lastSeen: timeStr,
       online: true,
-      seenCount: existing ? (existing.seenCount || 1) + 1 : 1
+      seenCount: existing ? (existing.seenCount || 1) + 1 : 1,
+      sessionStartMs: sessionStart,
+      totalDurMs: existing ? (existing.totalDurMs || 0) : 0,
+      todayDurMs: existing ? (existing.todayDurMs || 0) : 0,
     };
-    // Pertahankan lastLeft jika sudah ada sebelumnya
     if (existing && existing.lastLeft) entry.lastLeft = existing.lastLeft;
     seenDB[key] = entry;
     updates[key] = entry;
   });
 
-  // Tandai pemain yang tidak ada lagi sebagai offline + catat waktu keluar
+  // Tandai pemain offline + hitung & akumulasi durasi sesi
   Object.keys(seenDB).forEach(key => {
     if (!currentKeys.has(key) && seenDB[key].online) {
-      seenDB[key].online = false;
-      seenDB[key].lastLeft = timeStr;
-      updates[key] = { ...seenDB[key], online: false, lastLeft: timeStr };
+      const p = seenDB[key];
+      const sessionMs = p.sessionStartMs ? (now.getTime() - p.sessionStartMs) : 0;
+      const newTotal = (p.totalDurMs || 0) + sessionMs;
+      const newToday = (p.todayDurMs || 0) + sessionMs;
+      seenDB[key] = {
+        ...p,
+        online: false,
+        lastLeft: timeStr,
+        sessionStartMs: null,
+        totalDurMs: newTotal,
+        todayDurMs: newToday,
+      };
+      updates[key] = seenDB[key];
     }
   });
 
@@ -969,13 +1009,26 @@ function renderSeen() {
 
   el.innerHTML = list.map(p => {
     const {pfx, nm} = parseName(p.name);
-    return `<div class="seen-row" style="grid-template-columns:1fr 130px 130px 100px">
+    // Hitung durasi hari ini dan total
+    const nowMs2 = Date.now();
+    const sessDurMs = p.online && p.sessionStartMs ? (nowMs2 - p.sessionStartMs) : 0;
+    const todayMs = (p.todayDurMs || 0) + sessDurMs;
+    const totalMs = (p.totalDurMs || 0) + sessDurMs;
+    const todayStr = formatDur(todayMs);
+    const totalStr = formatDur(totalMs);
+    const durDisplay = todayMs > 0
+      ? (totalMs > todayMs
+        ? `${todayStr} <span style="color:var(--text3);font-size:10px">(total: ${totalStr})</span>`
+        : todayStr)
+      : '—';
+    return `<div class="seen-row" style="grid-template-columns:1fr 130px 130px 160px 100px">
       <span>
         ${pfx ? `<div class="ppfx">${pfx}</div>` : ''}
         <div class="pname" title="${p.name}">${nm || p.name}</div>
       </span>
       <span class="seen-time">${p.firstSeen || '—'}</span>
       <span class="seen-time">${p.online ? '—' : (p.lastLeft || '—')}</span>
+      <span style="text-align:center;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--gold)">${durDisplay}</span>
       <span style="text-align:center">
         <span class="seen-badge ${p.online?'on':'off'}">${p.online?'● Online':'○ Offline'}</span>
       </span>
