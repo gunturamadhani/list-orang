@@ -183,6 +183,54 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 .mf-val{font-size:14px;font-weight:700;color:var(--text)}
 .mf-bar{height:3px;background:var(--border);border-radius:2px;margin-top:6px;overflow:hidden}
 .mf-fill{height:100%;border-radius:2px;transition:width .8s}
+/* PLAYER JOURNEY */
+.pj-wrap{padding:0}
+.pj-player-list{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;max-height:260px;overflow-y:auto}
+.pj-player-list::-webkit-scrollbar{width:3px}
+.pj-player-list::-webkit-scrollbar-thumb{background:var(--red);border-radius:2px}
+.pj-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg2);border:0.5px solid var(--border2);border-radius:8px;cursor:pointer;transition:all .15s}
+.pj-item:hover,.pj-item.pj-active{border-color:var(--red);background:var(--bg3)}
+.pj-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;letter-spacing:.5px;text-transform:uppercase}
+.pj-av.on{background:rgba(0,230,118,.15);color:#00e676}
+.pj-av.off{background:var(--bg3);color:var(--text3)}
+.pj-iname{flex:1;min-width:0}
+.pj-iname .pname{font-size:14px}
+.pj-idur{font-family:"Share Tech Mono",monospace;font-size:11px;color:var(--text3);text-align:right}
+.pj-detail{background:var(--bg2);border:0.5px solid var(--border2);border-radius:10px;overflow:hidden}
+.pj-dheader{padding:16px 18px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:12px}
+.pj-dav{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0;letter-spacing:.5px}
+.pj-dav.on{background:rgba(0,230,118,.15);color:#00e676;border:1px solid rgba(0,230,118,.3)}
+.pj-dav.off{background:var(--bg3);color:var(--text3);border:0.5px solid var(--border2)}
+.pj-dtitle{font-size:16px;font-weight:800;color:#fff}
+.pj-dgang{font-size:11px;color:var(--orange);font-weight:700;margin-top:2px}
+.pj-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:14px 16px;border-bottom:0.5px solid var(--border)}
+.pj-card{background:var(--bg3);border-radius:6px;padding:10px 12px;text-align:center}
+.pj-card-val{font-size:20px;font-weight:800;color:#fff;line-height:1}
+.pj-card-val.red{color:var(--red)}.pj-card-val.ora{color:var(--orange)}.pj-card-val.g{color:#00e676}
+.pj-card-lbl{font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-top:4px}
+.pj-section{padding:14px 16px}
+.pj-section+.pj-section{border-top:0.5px solid var(--border)}
+.pj-sec-title{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text2);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.pj-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.pj-bar-label{font-family:"Share Tech Mono",monospace;font-size:10px;color:var(--text3);width:70px;flex-shrink:0;text-align:right}
+.pj-bar-track{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.pj-bar-fill{height:100%;background:linear-gradient(90deg,var(--red),var(--orange));border-radius:3px;transition:width .5s}
+.pj-bar-val{font-family:"Share Tech Mono",monospace;font-size:10px;color:var(--text);width:50px;text-align:right}
+.pj-bars-wrap{max-height:180px;overflow-y:auto}
+.pj-bars-wrap::-webkit-scrollbar{width:3px}
+.pj-bars-wrap::-webkit-scrollbar-thumb{background:var(--red);border-radius:2px}
+.pj-timeline{position:relative;padding-left:24px}
+.pj-timeline::before{content:"";position:absolute;left:6px;top:4px;bottom:4px;width:1px;background:var(--border2)}
+.pj-titem{position:relative;margin-bottom:10px}
+.pj-titem::before{content:"";position:absolute;left:-22px;top:4px;width:8px;height:8px;border-radius:50%;border:1.5px solid var(--border2);background:var(--bg)}
+.pj-titem.join::before{background:rgba(0,230,118,.3);border-color:#00e676}
+.pj-titem.leave::before{background:rgba(255,60,60,.2);border-color:var(--red)}
+.pj-titem.active::before{background:rgba(74,158,255,.3);border-color:#4a9eff;animation:pulse 1.5s infinite}
+.pj-ttime{font-family:"Share Tech Mono",monospace;font-size:10px;color:var(--text3)}
+.pj-tdesc{font-size:13px;font-weight:600;color:var(--text);margin-top:1px}
+.pj-tdur{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;margin-top:4px;font-family:"Share Tech Mono",monospace;letter-spacing:.3px}
+.pj-tdur.on{background:rgba(0,230,118,.12);color:#00e676;border:0.5px solid rgba(0,230,118,.3)}
+.pj-tdur.off{background:var(--bg3);color:var(--text3);border:0.5px solid var(--border2)}
 .toast{position:fixed;bottom:24px;right:24px;background:linear-gradient(135deg,var(--red),var(--orange));color:#fff;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:700;letter-spacing:.5px;z-index:10000;transform:translateY(60px);opacity:0;transition:all .3s;pointer-events:none}
 .toast.show{transform:translateY(0);opacity:1}
 .gang-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:16px}
@@ -327,6 +375,7 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
       <button class="tab" onclick="switchTab('gangs',this)">🏴 Gang Stats</button>
       <button class="tab" onclick="switchTab('chart',this)">📊 Grafik</button>
       <button class="tab" onclick="switchTab('seen',this)">👥 Pernah Online</button>
+      <button class="tab" onclick="switchTab('journey',this)">🎯 Journey</button>
       <button class="tab" onclick="switchTab('stalker',this)">👁 Stalker</button>
       <button class="tab" onclick="switchTab('history',this)">🕐 History</button>
     </div>
@@ -427,11 +476,8 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
       <input class="seen-search" id="seenQ" type="text" placeholder="🔍 Cari nama pemain..." oninput="renderSeen()">
       <select class="ctrl-select" id="seenSort" onchange="renderSeen()" style="font-size:13px;padding:8px 10px">
         <option value="status">Online Dulu</option>
-        <option value="dur_desc">Durasi ↓ Terlama</option>
-        <option value="dur_asc">Durasi ↑ Terbaru</option>
+        <option value="dur_desc">Durasi Hari Ini ↓</option>
         <option value="total_desc">Total Durasi ↓</option>
-        <option value="first_seen">Pertama Terlihat</option>
-        <option value="last_left">Terakhir Keluar</option>
       </select>
       <div class="seen-filter">
         <button class="sf act" onclick="setSFilter('all',this)">Semua</button>
@@ -440,13 +486,53 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
       </div>
     </div>
     <div class="table-wrap">
-      <div class="seen-thead" style="grid-template-columns:1fr 130px 130px 160px 100px"><span>Nama Pemain</span><span>Pertama Terlihat</span><span>Terakhir Keluar</span><span style="text-align:center">Durasi</span><span style="text-align:center">Status</span></div>
+      <div class="seen-thead" style="grid-template-columns:1fr 130px 130px 220px 100px"><span>Nama Pemain</span><span>Pertama Terlihat</span><span>Terakhir Keluar</span><span style="text-align:center">Durasi</span><span style="text-align:center">Status</span></div>
       <div class="plist" id="seenList" style="max-height:440px">
         <div class="empty" style="padding:40px"><span>Belum ada data.<br>Tunggu refresh pertama...</span></div>
       </div>
     </div>
     <div style="margin-top:10px;font-size:11px;color:var(--text3);font-family:'Share Tech Mono',monospace;text-align:center">
       Data tersimpan permanen di Firebase • Terakumulasi setiap 30 detik
+    </div>
+  </div>
+
+  <!-- TAB JOURNEY -->
+  <div class="section" id="tab-journey">
+    <div style="font-size:11px;color:var(--text2);letter-spacing:1px;text-transform:uppercase;font-weight:700;margin-bottom:10px">Pilih pemain dari database:</div>
+    <div style="display:flex;gap:8px;margin-bottom:10px">
+      <div class="search-wrap" style="flex:1">
+        <span class="search-ico">🔍</span>
+        <input type="text" id="journeyQ" placeholder="Cari nama pemain..." oninput="renderJourneyList()">
+      </div>
+      <div class="seen-filter">
+        <button class="sf act" onclick="setJFilter('all',this)">Semua</button>
+        <button class="sf" onclick="setJFilter('online',this)">Online</button>
+        <button class="sf" onclick="setJFilter('offline',this)">Offline</button>
+      </div>
+    </div>
+    <div class="pj-player-list" id="journeyList">
+      <div class="empty" style="padding:24px"><span>Memuat database...</span></div>
+    </div>
+    <div id="journeyDetail" style="display:none;margin-top:14px">
+      <div class="pj-detail">
+        <div class="pj-dheader">
+          <div class="pj-dav" id="jdAv"></div>
+          <div style="flex:1;min-width:0">
+            <div class="pj-dtitle" id="jdName"></div>
+            <div class="pj-dgang" id="jdGang"></div>
+          </div>
+          <div id="jdBadge"></div>
+        </div>
+        <div class="pj-cards" id="jdCards"></div>
+        <div class="pj-section">
+          <div class="pj-sec-title">📊 Durasi per hari (7 hari terakhir)</div>
+          <div class="pj-bars-wrap" id="jdBars"></div>
+        </div>
+        <div class="pj-section">
+          <div class="pj-sec-title">🕐 Timeline sesi masuk / keluar</div>
+          <div class="pj-timeline" id="jdTimeline"></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -658,6 +744,7 @@ function switchTab(name,btn){
   if(name==='chart')updateChart();
   if(name==='gangs')buildGangStats(allPlayers);
   if(name==='seen')renderSeen();
+  if(name==='journey'){renderJourneyList();}
   if(name==='stalker'){renderStalkerDB();}
 }
 
@@ -714,6 +801,149 @@ function formatDurMs(ms) {
   return ms;
 }
 
+// ── PLAYER JOURNEY ──
+let journeyFilter = 'all';
+let activeJourneyKey = null;
+
+function gangInitials(gang, name) {
+  if (gang) return gang.slice(0,4).toUpperCase();
+  return (name||'??').split(/[\s\-]+/).filter(Boolean).slice(0,2).map(p=>(p[0]||'?').toUpperCase()).join('').slice(0,4);
+}
+
+function setJFilter(f, btn) {
+  journeyFilter = f;
+  document.querySelectorAll('#tab-journey .sf').forEach(b => b.classList.remove('act'));
+  btn.classList.add('act');
+  renderJourneyList();
+}
+
+function renderJourneyList() {
+  const el = document.getElementById('journeyList');
+  const q = (document.getElementById('journeyQ').value||'').toLowerCase().trim();
+  let list = Object.values(seenDB);
+  if (journeyFilter === 'online') list = list.filter(p => p.online);
+  else if (journeyFilter === 'offline') list = list.filter(p => !p.online);
+  if (q) list = list.filter(p => (p.name||'').toLowerCase().includes(q)||(p.gang||'').toLowerCase().includes(q));
+  list.sort((a,b) => {
+    if (a.online !== b.online) return a.online ? -1 : 1;
+    return ((b.totalDurMs||0)+(b.online&&b.sessionStartMs?Date.now()-b.sessionStartMs:0)) -
+           ((a.totalDurMs||0)+(a.online&&a.sessionStartMs?Date.now()-a.sessionStartMs:0));
+  });
+  if (!list.length) {
+    el.innerHTML = '<div class="empty" style="padding:24px"><span>Tidak ada pemain di database.</span></div>';
+    return;
+  }
+  el.innerHTML = list.map(p => {
+    const {pfx,nm} = parseName(p.name);
+    const key = (p.name||'unknown').toLowerCase().replace(/[^a-z0-9_]/g,'_').slice(0,80);
+    const isActive = key === activeJourneyKey;
+    const sessMs = p.online && p.sessionStartMs ? Date.now()-p.sessionStartMs : 0;
+    const totalMs = (p.totalDurMs||0)+sessMs;
+    const initials = gangInitials(pfx, p.name);
+    return `<div class="pj-item${isActive?' pj-active':''}" onclick="showJourney('${key.replace(/'/g,"\'")}')">
+      <div class="pj-av ${p.online?'on':'off'}">${initials}</div>
+      <div class="pj-iname">
+        ${pfx?`<div class="ppfx" style="font-size:10px">${pfx}</div>`:''}
+        <div class="pname">${nm||p.name}</div>
+      </div>
+      <div class="pj-idur">
+        <div style="color:var(--gold);font-size:12px">${formatDur(totalMs)}</div>
+        <div style="margin-top:2px"><span class="seen-badge ${p.online?'on':'off'}">${p.online?'● Online':'○ Offline'}</span></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function showJourney(key) {
+  activeJourneyKey = key;
+  const p = seenDB[key];
+  if (!p) return;
+  renderJourneyList();
+
+  const {pfx,nm} = parseName(p.name);
+  const sessMs = p.online && p.sessionStartMs ? Date.now()-p.sessionStartMs : 0;
+  const totalMs = (p.totalDurMs||0)+sessMs;
+  const todayMs = (p.todayDurMs||0)+sessMs;
+  const initials = gangInitials(pfx, p.name);
+
+  document.getElementById('journeyDetail').style.display = 'block';
+  const av = document.getElementById('jdAv');
+  av.textContent = initials;
+  av.className = 'pj-dav ' + (p.online?'on':'off');
+  document.getElementById('jdName').textContent = nm||p.name;
+  document.getElementById('jdGang').textContent = pfx || 'Tanpa Gang';
+  document.getElementById('jdBadge').innerHTML = `<span class="seen-badge ${p.online?'on':'off'}">${p.online?'● Online':'○ Offline'}</span>`;
+
+  // Hitung hari aktif dari sessions
+  const sessions = p.sessions || [];
+  const activeDays = new Set(sessions.map(s=>s.date||'')).size || (p.seenCount ? Math.min(p.seenCount,7) : 1);
+
+  document.getElementById('jdCards').innerHTML = [
+    {l:'Total Durasi', v:formatDur(totalMs), cls:'ora'},
+    {l:'Hari Ini', v:formatDur(todayMs), cls:'g'},
+    {l:'Hari Aktif', v:(activeDays||p.seenCount||1)+'x', cls:''},
+    {l:'Sesi Tercatat', v:(p.seenCount||1)+'x', cls:'red'},
+  ].map(s=>`<div class="pj-card"><div class="pj-card-val ${s.cls}">${s.v}</div><div class="pj-card-lbl">${s.l}</div></div>`).join('');
+
+  // Bars per hari dari sessions atau estimasi
+  const dayMap = {};
+  if (sessions.length) {
+    sessions.forEach(s => {
+      if (s.date && s.durMs) dayMap[s.date] = (dayMap[s.date]||0)+s.durMs;
+    });
+  }
+  // Jika tidak ada data sessions, tampilkan estimasi dari todayMs
+  if (!Object.keys(dayMap).length) {
+    const today = new Date().toLocaleDateString('id-ID');
+    if (todayMs > 0) dayMap[today] = todayMs;
+  }
+  const dayEntries = Object.entries(dayMap).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,7);
+  const maxDayMs = dayEntries.length ? Math.max(...dayEntries.map(d=>d[1])) : 1;
+  const barsEl = document.getElementById('jdBars');
+  if (dayEntries.length) {
+    barsEl.innerHTML = dayEntries.map(([d,ms])=>`
+      <div class="pj-bar-row">
+        <span class="pj-bar-label">${d}</span>
+        <div class="pj-bar-track"><div class="pj-bar-fill" style="width:${Math.round(ms/maxDayMs*100)}%"></div></div>
+        <span class="pj-bar-val">${formatDur(ms)}</span>
+      </div>`).join('');
+  } else {
+    barsEl.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:8px 0">Data harian belum tersedia. Terakumulasi setiap refresh.</div>';
+  }
+
+  // Timeline sesi
+  const tlEl = document.getElementById('jdTimeline');
+  if (sessions.length) {
+    tlEl.innerHTML = sessions.slice().reverse().map(s=>`
+      <div class="pj-titem ${s.type}">
+        <div class="pj-ttime">${s.time}</div>
+        <div class="pj-tdesc">${s.type==='join'?'Masuk server':s.type==='active'?'Sedang online':'Keluar server'}</div>
+        ${s.durMs?`<span class="pj-tdur ${s.type==='active'?'on':'off'}">${formatDur(s.durMs)}</span>`:''}
+      </div>`).join('');
+  } else {
+    // Tampilkan info sesi sekarang jika online
+    if (p.online && p.sessionStartMs) {
+      tlEl.innerHTML = `
+        <div class="pj-titem join">
+          <div class="pj-ttime">${p.lastSeen||'—'}</div>
+          <div class="pj-tdesc">Masuk server</div>
+        </div>
+        <div class="pj-titem active">
+          <div class="pj-ttime">Sekarang</div>
+          <div class="pj-tdesc">Sedang online</div>
+          <span class="pj-tdur on">${formatDur(sessMs)}</span>
+        </div>`;
+    } else {
+      tlEl.innerHTML = `
+        <div class="pj-titem leave">
+          <div class="pj-ttime">${p.lastLeft||p.lastSeen||'—'}</div>
+          <div class="pj-tdesc">Terakhir terdeteksi</div>
+        </div>`;
+    }
+  }
+}
+
+// Hook journey tab
 // ── STALKER MODE ──
 let watchList = [];
 
@@ -1006,6 +1236,8 @@ async function updateSeenDB(players) {
   updateSeenStats();
   renderSeen();
   if(document.getElementById("stalkerDBList"))renderStalkerDB();
+  if(document.getElementById("journeyList")&&activeJourneyKey)showJourney(activeJourneyKey);
+  if(document.getElementById("journeyList")&&document.getElementById("tab-journey").classList.contains("active"))renderJourneyList();
 }
 
 function updateSeenStats() {
@@ -1084,12 +1316,18 @@ function renderSeen() {
     const totalMs = (p.totalDurMs || 0) + sessDurMs;
     const todayStr = formatDur(todayMs);
     const totalStr = formatDur(totalMs);
-    const durDisplay = todayMs > 0
-      ? (totalMs > todayMs
-        ? `${todayStr} <span style="color:var(--text3);font-size:10px">(total: ${totalStr})</span>`
-        : todayStr)
-      : '—';
-    return `<div class="seen-row" style="grid-template-columns:1fr 130px 130px 160px 100px">
+    let durDisplay = '—';
+    if (totalMs > 0) {
+      if (todayMs > 0 && totalMs > todayMs) {
+        durDisplay = `<span style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--gold)">${totalStr}</span>
+          <span style="display:inline-flex;align-items:center;gap:3px;background:rgba(255,140,0,.12);border:0.5px solid rgba(255,140,0,.3);border-radius:4px;padding:1px 6px;font-size:10px;color:var(--orange);margin-left:4px;font-family:'Share Tech Mono',monospace;white-space:nowrap">hari ini ${todayStr}</span>`;
+      } else if (todayMs > 0) {
+        durDisplay = `<span style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--gold)">${todayStr}</span>`;
+      } else {
+        durDisplay = `<span style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--text3)">${totalStr}</span>`;
+      }
+    }
+    return `<div class="seen-row" style="grid-template-columns:1fr 130px 130px 220px 100px">
       <span>
         ${pfx ? `<div class="ppfx">${pfx}</div>` : ''}
         <div class="pname" title="${p.name}">${nm || p.name}</div>
