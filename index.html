@@ -6,74 +6,91 @@
 <title>iMe RP — Player Checker</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<!-- Firebase SDK -->
+<script type="module">
+  import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import{getDatabase,ref,set,get,onValue,update}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  const cfg={apiKey:"AIzaSyDcJb0i2C_BeTm7laZ6vDIscFC1R6gjeoU",authDomain:"list-player-f0e00.firebaseapp.com",databaseURL:"https://list-player-f0e00-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"list-player-f0e00",storageBucket:"list-player-f0e00.firebasestorage.app",messagingSenderId:"92008883411",appId:"1:92008883411:web:2f4be93f79136616b8e026"};
+  const app=initializeApp(cfg);
+  const db=getDatabase(app);
+  window._fbSet=(path,data)=>set(ref(db,path),data);
+  window._fbUpdate=(path,data)=>update(ref(db,path),data);
+  window._fbGet=(path)=>get(ref(db,path));
+  window._fbListen=(path,cb)=>onValue(ref(db,path),snap=>cb(snap.val()));
+  let firstLoad=true;
+  window._fbListen('seenPlayers',(data)=>{
+    if(data){seenDB=data;updateSeenStats();renderSeen();if(document.getElementById('stalkerDBList'))renderStalkerDB();}
+    if(firstLoad){firstLoad=false;window._firebaseReady=true;loadData();}
+  });
+  setTimeout(()=>{if(firstLoad){firstLoad=false;window._firebaseReady=true;loadData();}},3000);
+</script>
 <style>
-:root{
-  --red:#ff3c3c;--orange:#ff8c00;--gold:#ffb300;
-  --bg:#0a0608;--bg2:#110b0d;--bg3:#180d10;
-  --border:#2a1215;--border2:#3d1a1e;
-  --text:#f0d0d5;--text2:#a07880;--text3:#6a4850;
-}
+:root{--red:#ff3c3c;--orange:#ff8c00;--gold:#ffb300;--bg:#0a0608;--bg2:#110b0d;--bg3:#180d10;--border:#2a1215;--border2:#3d1a1e;--text:#f0d0d5;--text2:#a07880;--text3:#6a4850}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Barlow Condensed',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
 body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.03) 2px,rgba(0,0,0,.03) 4px);pointer-events:none;z-index:9999}
 .wrap{max-width:1100px;margin:0 auto;padding:24px 16px}
+/* HEADER */
 .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
 .logo{display:flex;align-items:center;gap:14px}
-.logo-icon{width:48px;height:48px;background:linear-gradient(135deg,var(--red),var(--orange));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff;letter-spacing:-1px;position:relative;overflow:hidden}
+.logo-icon{width:48px;height:48px;background:linear-gradient(135deg,var(--red),var(--orange));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff;position:relative;overflow:hidden}
 .logo-icon::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.15),transparent)}
 .logo-title{font-size:28px;font-weight:800;letter-spacing:2px;color:#fff;line-height:1;text-transform:uppercase}
 .logo-sub{font-size:12px;color:var(--orange);letter-spacing:3px;font-weight:600;text-transform:uppercase}
 .header-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .status-badge{display:flex;align-items:center;gap:7px;background:var(--bg2);border:0.5px solid var(--border2);padding:7px 14px;border-radius:6px;font-size:13px;font-weight:600;letter-spacing:.5px}
 .sdot{width:8px;height:8px;border-radius:50%;background:var(--red);animation:pulse 1.5s infinite}
-.sdot.on{background:#00e676}
-.sdot.off{animation:none}
+.sdot.on{background:#00e676}.sdot.off{animation:none}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
 .rbtn{background:linear-gradient(135deg,var(--red),var(--orange));border:none;color:#fff;padding:9px 20px;border-radius:6px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:1px;text-transform:uppercase;display:flex;align-items:center;gap:7px;transition:opacity .15s;box-shadow:0 0 20px rgba(255,60,60,.2)}
-.rbtn:hover{opacity:.85}
-.rbtn:disabled{opacity:.4;cursor:not-allowed}
+.rbtn:hover{opacity:.85}.rbtn:disabled{opacity:.4;cursor:not-allowed}
 .spin{animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .divider{height:1px;background:linear-gradient(90deg,transparent,var(--red),var(--orange),transparent);margin-bottom:20px;opacity:.4}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
-@media(max-width:640px){.stats{grid-template-columns:repeat(2,1fr)}}
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px}
+.stats2{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:16px}
+@media(max-width:640px){.stats,.stats2{grid-template-columns:repeat(2,1fr)}}
 .stat{background:var(--bg2);border:0.5px solid var(--border2);border-radius:10px;padding:16px;position:relative;overflow:hidden}
 .stat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--red),var(--orange))}
 .stat-label{font-size:11px;color:var(--text2);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;font-weight:600}
 .stat-val{font-size:32px;font-weight:800;color:#fff;line-height:1;letter-spacing:-1px}
-.stat-val.red{color:var(--red)}
-.stat-val.ora{color:var(--orange)}
-.stat-val.gld{color:var(--gold)}
+.stat-val.red{color:var(--red)}.stat-val.ora{color:var(--orange)}.stat-val.gld{color:var(--gold)}
 .stat-sub{font-size:11px;color:var(--text3);margin-top:4px;font-family:'Share Tech Mono',monospace}
 .fill-bar{height:3px;background:var(--border);border-radius:2px;margin-top:10px;overflow:hidden}
-.fill-inner{height:100%;background:linear-gradient(90deg,var(--red),var(--orange));border-radius:2px;transition:width .8s cubic-bezier(.4,0,.2,1)}
-.tabs{display:flex;gap:4px;margin-bottom:16px;background:var(--bg2);border:0.5px solid var(--border2);padding:4px;border-radius:8px;width:fit-content}
-.tab{padding:8px 20px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text2);transition:all .15s;border:none;background:transparent;font-family:'Barlow Condensed',sans-serif}
+.fill-inner{height:100%;background:linear-gradient(90deg,var(--red),var(--orange));border-radius:2px;transition:width .8s}
+/* TABS */
+.tab-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px}
+.tabs{display:flex;gap:4px;background:var(--bg2);border:0.5px solid var(--border2);padding:4px;border-radius:8px;flex-wrap:wrap}
+.tab{padding:8px 16px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text2);transition:all .15s;border:none;background:transparent;font-family:'Barlow Condensed',sans-serif}
 .tab.active{background:linear-gradient(135deg,var(--red),var(--orange));color:#fff;box-shadow:0 0 15px rgba(255,60,60,.3)}
 .tab:hover:not(.active){color:var(--text)}
+.share-btn{background:var(--bg2);border:0.5px solid var(--border2);color:var(--text2);padding:8px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:700;letter-spacing:.5px;display:flex;align-items:center;gap:6px;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;transition:all .15s}
+.share-btn:hover{border-color:var(--orange);color:var(--orange)}
+/* CONTROLS */
 .controls{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
 .search-wrap{flex:1;min-width:200px;position:relative}
 .search-wrap input{width:100%;background:var(--bg2);border:0.5px solid var(--border2);color:var(--text);padding:10px 14px 10px 38px;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:500}
 .search-wrap input::placeholder{color:var(--text3)}
 .search-wrap input:focus{outline:none;border-color:var(--red)}
 .search-wrap input.has-val{padding-right:32px}
-.clear-input-btn{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:var(--bg3);border:0.5px solid var(--border2);color:var(--text2);width:20px;height:20px;border-radius:50%;cursor:pointer;font-size:11px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;transition:all .15s;padding:0}
-.clear-input-btn:hover{border-color:var(--red);color:var(--red)}
 .search-ico{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none;font-size:15px}
+.clear-input-btn{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:var(--bg3);border:0.5px solid var(--border2);color:var(--text2);width:20px;height:20px;border-radius:50%;cursor:pointer;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;transition:all .15s;padding:0}
+.clear-input-btn:hover{border-color:var(--red);color:var(--red)}
 .ctrl-select{background:var(--bg2);border:0.5px solid var(--border2);color:var(--text);padding:10px 12px;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:600}
 .view-toggle{display:flex;gap:4px;background:var(--bg2);border:0.5px solid var(--border2);padding:4px;border-radius:8px}
 .vbtn{width:34px;height:34px;border:none;background:transparent;color:var(--text2);cursor:pointer;border-radius:5px;display:flex;align-items:center;justify-content:center;transition:all .15s}
 .vbtn.active{background:linear-gradient(135deg,var(--red),var(--orange));color:#fff}
 .count-badge{background:var(--bg2);border:0.5px solid var(--border2);padding:8px 14px;border-radius:8px;font-size:13px;font-weight:700;color:var(--text2);letter-spacing:.5px;white-space:nowrap}
 .count-badge span{color:var(--orange)}
+/* TABLE */
 .table-wrap{background:var(--bg2);border:0.5px solid var(--border2);border-radius:10px;overflow:hidden}
-.thead{display:grid;grid-template-columns:64px 1fr 120px 90px;gap:8px;padding:10px 16px;font-size:10px;letter-spacing:1.5px;color:var(--text2);text-transform:uppercase;font-weight:700;border-bottom:0.5px solid var(--border2);background:var(--bg3)}
+.thead{display:grid;grid-template-columns:64px 1fr 100px 110px 90px;gap:8px;padding:10px 16px;font-size:10px;letter-spacing:1.5px;color:var(--text2);text-transform:uppercase;font-weight:700;border-bottom:0.5px solid var(--border2);background:var(--bg3)}
 .plist{max-height:440px;overflow-y:auto}
 .plist::-webkit-scrollbar{width:4px}
 .plist::-webkit-scrollbar-thumb{background:var(--red);border-radius:2px}
-.prow{display:grid;grid-template-columns:64px 1fr 120px 90px;gap:8px;padding:10px 16px;align-items:center;border-bottom:0.5px solid var(--border);transition:background .1s}
-.prow:last-child{border-bottom:none}
-.prow:hover{background:var(--bg3)}
+.prow{display:grid;grid-template-columns:64px 1fr 100px 110px 90px;gap:8px;padding:10px 16px;align-items:center;border-bottom:0.5px solid var(--border);transition:background .1s}
+.prow:last-child{border-bottom:none}.prow:hover{background:var(--bg3)}
 .pid{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--text3)}
 .ppfx{font-size:11px;color:var(--orange);font-weight:700;letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
 .pname{font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -85,6 +102,7 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 .copy-btn{background:var(--bg3);border:0.5px solid var(--border2);color:var(--text2);padding:4px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:700;letter-spacing:.5px;transition:all .15s;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase}
 .copy-btn:hover{border-color:var(--orange);color:var(--orange)}
 .copy-btn.copied{border-color:#00e676;color:#00e676}
+/* CARDS VIEW */
 .card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;max-height:480px;overflow-y:auto;padding-right:4px}
 .card-grid::-webkit-scrollbar{width:4px}
 .card-grid::-webkit-scrollbar-thumb{background:var(--red);border-radius:2px}
@@ -95,97 +113,77 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 .card-id{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);margin-bottom:4px}
 .card-pfx{font-size:11px;color:var(--orange);font-weight:700;letter-spacing:.5px;margin-bottom:2px}
 .card-name{font-size:14px;font-weight:700;color:var(--text);margin-bottom:10px;line-height:1.3}
-.card-footer{display:flex;align-items:center;justify-content:space-between}
+.card-footer{display:flex;align-items:center;justify-content:space-between;gap:4px;flex-wrap:wrap}
 .card-ping{display:flex;align-items:center;gap:4px;font-family:'Share Tech Mono',monospace;font-size:12px}
 .card-copy{background:var(--bg3);border:0.5px solid var(--border2);color:var(--text2);padding:3px 9px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:700;letter-spacing:.5px;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;transition:all .15s}
 .card-copy:hover{border-color:var(--orange);color:var(--orange)}
 .card-copy.copied{border-color:#00e676;color:#00e676}
+/* CHART */
 .chart-wrap{background:var(--bg2);border:0.5px solid var(--border2);border-radius:10px;padding:20px}
 .chart-title{font-size:14px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text2);margin-bottom:16px}
 .chart-title span{color:var(--orange)}
-.history-wrap{background:var(--bg2);border:0.5px solid var(--border2);border-radius:10px;overflow:hidden}
-.history-header{padding:12px 16px;border-bottom:0.5px solid var(--border2);background:var(--bg3);font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text2);display:flex;justify-content:space-between;align-items:center}
-.history-header span{color:var(--orange)}
-.hlist{max-height:340px;overflow-y:auto}
-.hlist::-webkit-scrollbar{width:4px}
-.hlist::-webkit-scrollbar-thumb{background:var(--red);border-radius:2px}
-.hrow{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:0.5px solid var(--border);font-size:13px;gap:12px}
-.hrow:last-child{border-bottom:none}
-.hrow:hover{background:var(--bg3)}
-.htime{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3)}
-.hcount{font-weight:700;color:var(--orange);font-size:15px}
-.hdelta{font-size:12px;font-family:'Share Tech Mono',monospace}
-.hdelta.up{color:#00e676}
-.hdelta.dn{color:var(--red)}
-.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:56px;gap:14px;color:var(--text3);font-size:15px;font-weight:600;letter-spacing:.5px;text-align:center;line-height:1.6}
-.loader{width:32px;height:32px;border:2px solid var(--border2);border-top-color:var(--red);border-radius:50%;animation:spin .8s linear infinite}
-.section{display:none}
-.section.active{display:block}
-.footer{margin-top:20px;display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--text3);font-family:'Share Tech Mono',monospace;flex-wrap:wrap;gap:8px;padding-top:16px;border-top:0.5px solid var(--border)}
-.owner{display:flex;align-items:center;gap:8px}
-.owner img{width:22px;height:22px;border-radius:50%;border:0.5px solid var(--border2)}
+/* PEAK HOURS */
+.ph-tabs-row{display:flex;gap:3px;margin-bottom:12px}
+.ph-tb{padding:5px 12px;border-radius:4px;border:0.5px solid var(--border2);background:transparent;color:var(--text3);cursor:pointer;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;font-family:'Barlow Condensed',sans-serif;transition:all .15s}
+.ph-tb.act{background:var(--red);color:#fff;border-color:var(--red)}
+.ph-mini-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.ph-mini-card{border-top:1px solid var(--border2);padding:8px 0}
+.ph-mini-val{font-size:18px;font-weight:800;color:#fff}
+.ph-mini-val.r{color:var(--red)}.ph-mini-val.o{color:var(--orange)}
+.ph-mini-lbl{font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-top:3px}
+.hm-wrap{overflow-x:auto}
+.hm-grid{display:grid;grid-template-columns:38px repeat(24,1fr);gap:2px;min-width:560px}
+.hm-hdr{font-size:9px;color:var(--text3);text-align:center;padding-bottom:3px;font-family:'Share Tech Mono',monospace}
+.hm-day-lbl{font-size:9px;color:var(--text2);display:flex;align-items:center;justify-content:flex-end;padding-right:6px;font-weight:700}
+.hm-cell{height:18px;border-radius:2px;cursor:pointer;transition:opacity .12s}
+.hm-cell:hover{opacity:.65}
+.hm-leg{display:flex;align-items:center;gap:6px;margin-top:8px}
+.hm-leg-lbl{font-size:9px;color:var(--text3)}
+.hm-leg-steps{display:flex;gap:2px}
+.hm-leg-step{width:14px;height:4px;border-radius:1px}
+.hm-tip{margin-top:8px;font-size:11px;color:var(--text3);font-family:'Share Tech Mono',monospace;height:16px}
+.hm-tip span{color:var(--orange)}
+.ph-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:3px}
+.ph-bar-lbl{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);width:32px;text-align:right;flex-shrink:0}
+.ph-bar-track{flex:1;height:12px;background:var(--bg3);border-radius:2px;overflow:hidden}
+.ph-bar-fill{height:100%;border-radius:2px}
+.ph-bar-val{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);width:42px;text-align:right;flex-shrink:0}
+.ph-bar-val.pk{color:var(--orange)}
+/* GANG STATS */
+.gang-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:16px}
+.gang-card{background:var(--bg2);border:0.5px solid var(--border2);border-radius:8px;padding:12px;cursor:pointer;transition:all .15s}
+.gang-card:hover,.gang-card.active-filter{border-color:var(--red);background:var(--bg3)}
+.gang-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.gang-name{font-size:14px;font-weight:800;color:#fff;letter-spacing:.5px}
+.gang-count{font-size:20px;font-weight:800;color:var(--orange)}
+.gang-solo{font-size:11px;color:var(--text3);margin-bottom:6px}
+.gang-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden}
+.gang-bar-fill{height:100%;background:linear-gradient(90deg,var(--red),var(--orange));border-radius:2px}
+.clear-gang-btn{background:var(--bg3);border:0.5px solid var(--border2);color:var(--text2);padding:5px 10px;border-radius:5px;cursor:pointer;font-size:11px;font-weight:700;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;transition:all .15s;display:none}
+.clear-gang-btn:hover{border-color:var(--red);color:var(--red)}
+/* SEEN */
 .seen-controls{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
-.seen-search{flex:1;min-width:160px;background:var(--bg2);border:0.5px solid var(--border2);color:var(--text);padding:8px 12px;border-radius:8px;font-family:"Barlow Condensed",sans-serif;font-size:14px}
-.seen-search::placeholder{color:var(--text3)}
-.seen-search:focus{outline:none;border-color:var(--red)}
+.seen-search{flex:1;min-width:160px;background:var(--bg2);border:0.5px solid var(--border2);color:var(--text);padding:8px 12px;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-size:14px}
+.seen-search::placeholder{color:var(--text3)}.seen-search:focus{outline:none;border-color:var(--red)}
 .seen-filter{display:flex;gap:4px}
-.sf{padding:6px 12px;border-radius:6px;border:0.5px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-size:12px;font-weight:700;letter-spacing:.5px;font-family:"Barlow Condensed",sans-serif;text-transform:uppercase;transition:all .15s}
+.sf{padding:6px 12px;border-radius:6px;border:0.5px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-size:12px;font-weight:700;letter-spacing:.5px;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;transition:all .15s}
 .sf.act{background:linear-gradient(135deg,var(--red),var(--orange));color:#fff;border-color:transparent}
 .seen-stats{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
 .seen-stat{background:var(--bg2);border:0.5px solid var(--border2);border-radius:8px;padding:10px 14px;text-align:center;flex:1;min-width:80px}
 .seen-stat-val{font-size:22px;font-weight:800;color:#fff;line-height:1}
 .seen-stat-val.red{color:var(--red)}.seen-stat-val.g{color:#00e676}.seen-stat-val.ora{color:var(--orange)}
 .seen-stat-lbl{font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-top:4px}
-.seen-thead{display:grid;grid-template-columns:64px 1fr 120px 100px;gap:8px;padding:8px 14px;font-size:10px;letter-spacing:1.5px;color:var(--text2);text-transform:uppercase;font-weight:700;border-bottom:0.5px solid var(--border2);background:var(--bg3)}
-.seen-row{display:grid;grid-template-columns:64px 1fr 120px 100px;gap:8px;padding:9px 14px;align-items:center;border-bottom:0.5px solid var(--border);transition:background .1s}
-.seen-row:last-child{border-bottom:none}
-.seen-row:hover{background:var(--bg3)}
+.seen-thead{display:grid;grid-template-columns:1fr 130px 130px 220px 100px;gap:8px;padding:8px 14px;font-size:10px;letter-spacing:1.5px;color:var(--text2);text-transform:uppercase;font-weight:700;border-bottom:0.5px solid var(--border2);background:var(--bg3)}
+.seen-row{display:grid;grid-template-columns:1fr 130px 130px 220px 100px;gap:8px;padding:9px 14px;align-items:center;border-bottom:0.5px solid var(--border);transition:background .1s}
+.seen-row:last-child{border-bottom:none}.seen-row:hover{background:var(--bg3)}
 .seen-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;letter-spacing:.5px;text-transform:uppercase;display:inline-block}
 .seen-badge.on{background:rgba(0,230,118,.15);color:#00e676;border:0.5px solid rgba(0,230,118,.3)}
 .seen-badge.off{background:var(--bg3);color:var(--text3);border:0.5px solid var(--border2)}
-.seen-time{font-family:"Share Tech Mono",monospace;font-size:11px;color:var(--text3)}
-/* STALKER */
-.stalker-input-row{display:flex;gap:8px;margin-bottom:12px}
-.stalker-input-row input{flex:1;background:var(--bg2);border:0.5px solid var(--border2);color:var(--text);padding:9px 12px;border-radius:8px;font-family:"Barlow Condensed",sans-serif;font-size:14px}
-.stalker-input-row input::placeholder{color:var(--text3)}
-.stalker-input-row input:focus{outline:none;border-color:var(--red)}
-.watch-list{display:flex;flex-direction:column;gap:6px}
-.watch-item{display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--bg2);border:0.5px solid var(--border2);border-radius:8px;transition:border-color .15s}
-.watch-item.is-online{border-color:rgba(0,230,118,.4);background:rgba(0,230,118,.04)}
-.w-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;letter-spacing:.5px}
-.w-avatar.on{background:rgba(0,230,118,.15);color:#00e676}
-.w-avatar.off{background:var(--bg3);color:var(--text3)}
-.w-name{font-size:14px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.w-gang{font-size:11px;color:var(--orange);font-weight:600;letter-spacing:.3px}
-.w-status.on{color:#00e676;font-size:12px;font-weight:700;display:flex;align-items:center;gap:4px}
-.w-status.off{color:var(--text3);font-size:12px;font-weight:600;display:flex;align-items:center;gap:4px}
-.w-sdot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
-.w-sdot.on{background:#00e676;animation:pulse 1.5s infinite}
-.w-sdot.off{background:var(--text3)}
-.w-dur{font-family:"Share Tech Mono",monospace;font-size:10px;color:var(--text3);margin-top:2px}
-.w-del{background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:18px;padding:0 2px;line-height:1;transition:color .15s;flex-shrink:0}
-.w-del:hover{color:var(--red)}
-.stalker-note{font-size:11px;color:var(--text3);margin-top:10px;display:flex;align-items:center;gap:6px;font-family:"Share Tech Mono",monospace}
-/* MOOD */
-.mood-card{background:var(--bg2);border:0.5px solid var(--border2);border-radius:10px;padding:20px;margin-bottom:14px;position:relative;overflow:hidden}
-.mood-card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px}
-.mood-card.chaos::before{background:linear-gradient(90deg,var(--red),var(--orange))}
-.mood-card.cop::before{background:linear-gradient(90deg,#4a9eff,#00e676)}
-.mood-card.chill::before{background:linear-gradient(90deg,#4a7ab5,#4a9eff)}
-.mood-card.hot::before{background:linear-gradient(90deg,var(--orange),var(--gold))}
-.mood-top{display:flex;align-items:center;gap:16px;margin-bottom:16px}
-.mood-emoji{font-size:52px;line-height:1;flex-shrink:0}
-.mood-title{font-size:26px;font-weight:800;color:#fff;letter-spacing:.5px;line-height:1}
-.mood-desc{font-size:13px;color:var(--text2);margin-top:5px;line-height:1.6}
-.mood-factors{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-.mf{background:var(--bg3);border-radius:8px;padding:10px 12px;border:0.5px solid var(--border)}
-.mf-label{font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
-.mf-val{font-size:14px;font-weight:700;color:var(--text)}
-.mf-bar{height:3px;background:var(--border);border-radius:2px;margin-top:6px;overflow:hidden}
-.mf-fill{height:100%;border-radius:2px;transition:width .8s}
-/* PLAYER JOURNEY */
-.pj-wrap{padding:0}
-.pj-player-list{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;max-height:260px;overflow-y:auto}
+.seen-time{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3)}
+.clean-btn{background:var(--bg3);border:0.5px solid var(--border2);color:var(--text2);padding:6px 12px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:700;letter-spacing:.5px;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;transition:all .15s;display:flex;align-items:center;gap:5px;white-space:nowrap}
+.clean-btn:hover{border-color:var(--red);color:var(--red)}
+/* JOURNEY */
+.pj-player-list{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;max-height:240px;overflow-y:auto}
 .pj-player-list::-webkit-scrollbar{width:3px}
 .pj-player-list::-webkit-scrollbar-thumb{background:var(--red);border-radius:2px}
 .pj-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg2);border:0.5px solid var(--border2);border-radius:8px;cursor:pointer;transition:all .15s}
@@ -193,10 +191,7 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 .pj-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;letter-spacing:.5px;text-transform:uppercase}
 .pj-av.on{background:rgba(0,230,118,.15);color:#00e676}
 .pj-av.off{background:var(--bg3);color:var(--text3)}
-.pj-iname{flex:1;min-width:0}
-.pj-iname .pname{font-size:14px}
-.pj-idur{font-family:"Share Tech Mono",monospace;font-size:11px;color:var(--text3);text-align:right}
-.pj-detail{background:var(--bg2);border:0.5px solid var(--border2);border-radius:10px;overflow:hidden}
+.pj-detail{background:var(--bg2);border:0.5px solid var(--border2);border-radius:10px;overflow:hidden;margin-top:14px}
 .pj-dheader{padding:16px 18px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:12px}
 .pj-dav{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0;letter-spacing:.5px}
 .pj-dav.on{background:rgba(0,230,118,.15);color:#00e676;border:1px solid rgba(0,230,118,.3)}
@@ -210,99 +205,78 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 .pj-card-lbl{font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-top:4px}
 .pj-section{padding:14px 16px}
 .pj-section+.pj-section{border-top:0.5px solid var(--border)}
-.pj-sec-title{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text2);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.pj-sec-title{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text2);margin-bottom:10px}
 .pj-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
-.pj-bar-label{font-family:"Share Tech Mono",monospace;font-size:10px;color:var(--text3);width:70px;flex-shrink:0;text-align:right}
+.pj-bar-label{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);width:70px;flex-shrink:0;text-align:right}
 .pj-bar-track{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
 .pj-bar-fill{height:100%;background:linear-gradient(90deg,var(--red),var(--orange));border-radius:3px;transition:width .5s}
-.pj-bar-val{font-family:"Share Tech Mono",monospace;font-size:10px;color:var(--text);width:50px;text-align:right}
+.pj-bar-val{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text);width:50px;text-align:right}
 .pj-bars-wrap{max-height:180px;overflow-y:auto}
 .pj-bars-wrap::-webkit-scrollbar{width:3px}
 .pj-bars-wrap::-webkit-scrollbar-thumb{background:var(--red);border-radius:2px}
 .pj-timeline{position:relative;padding-left:24px}
-.pj-timeline::before{content:"";position:absolute;left:6px;top:4px;bottom:4px;width:1px;background:var(--border2)}
+.pj-timeline::before{content:'';position:absolute;left:6px;top:4px;bottom:4px;width:1px;background:var(--border2)}
 .pj-titem{position:relative;margin-bottom:10px}
-.pj-titem::before{content:"";position:absolute;left:-22px;top:4px;width:8px;height:8px;border-radius:50%;border:1.5px solid var(--border2);background:var(--bg)}
+.pj-titem::before{content:'';position:absolute;left:-22px;top:4px;width:8px;height:8px;border-radius:50%;border:1.5px solid var(--border2);background:var(--bg)}
 .pj-titem.join::before{background:rgba(0,230,118,.3);border-color:#00e676}
 .pj-titem.leave::before{background:rgba(255,60,60,.2);border-color:var(--red)}
 .pj-titem.active::before{background:rgba(74,158,255,.3);border-color:#4a9eff;animation:pulse 1.5s infinite}
-.pj-ttime{font-family:"Share Tech Mono",monospace;font-size:10px;color:var(--text3)}
+.pj-ttime{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3)}
 .pj-tdesc{font-size:13px;font-weight:600;color:var(--text);margin-top:1px}
-.pj-tdur{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;margin-top:4px;font-family:"Share Tech Mono",monospace;letter-spacing:.3px}
+.pj-tdur{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;margin-top:4px;font-family:'Share Tech Mono',monospace}
 .pj-tdur.on{background:rgba(0,230,118,.12);color:#00e676;border:0.5px solid rgba(0,230,118,.3)}
 .pj-tdur.off{background:var(--bg3);color:var(--text3);border:0.5px solid var(--border2)}
+/* STALKER */
+.stalker-input-row{display:flex;gap:8px;margin-bottom:12px}
+.stalker-input-row input{flex:1;background:var(--bg2);border:0.5px solid var(--border2);color:var(--text);padding:9px 12px;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-size:14px}
+.stalker-input-row input::placeholder{color:var(--text3)}
+.stalker-input-row input:focus{outline:none;border-color:var(--red)}
+.watch-list{display:flex;flex-direction:column;gap:6px}
+.watch-item{display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--bg2);border:0.5px solid var(--border2);border-radius:8px;transition:border-color .15s}
+.watch-item.is-online{border-color:rgba(0,230,118,.4);background:rgba(0,230,118,.04)}
+.w-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0}
+.w-avatar.on{background:rgba(0,230,118,.15);color:#00e676}
+.w-avatar.off{background:var(--bg3);color:var(--text3)}
+.w-name{font-size:14px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.w-gang{font-size:11px;color:var(--orange);font-weight:600}
+.w-status.on{color:#00e676;font-size:12px;font-weight:700;display:flex;align-items:center;gap:4px}
+.w-status.off{color:var(--text3);font-size:12px;font-weight:600;display:flex;align-items:center;gap:4px}
+.w-sdot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.w-sdot.on{background:#00e676;animation:pulse 1.5s infinite}
+.w-sdot.off{background:var(--text3)}
+.w-dur{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);margin-top:2px}
+.w-del{background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:18px;padding:0 2px;line-height:1;transition:color .15s;flex-shrink:0}
+.w-del:hover{color:var(--red)}
+.stalker-note{font-size:11px;color:var(--text3);margin-top:10px;font-family:'Share Tech Mono',monospace}
+/* HISTORY */
+.history-wrap{background:var(--bg2);border:0.5px solid var(--border2);border-radius:10px;overflow:hidden}
+.history-header{padding:12px 16px;border-bottom:0.5px solid var(--border2);background:var(--bg3);font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text2);display:flex;justify-content:space-between;align-items:center}
+.history-header span{color:var(--orange)}
+.hlist{max-height:340px;overflow-y:auto}
+.hlist::-webkit-scrollbar{width:4px}
+.hlist::-webkit-scrollbar-thumb{background:var(--red);border-radius:2px}
+.hrow{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:0.5px solid var(--border);font-size:13px;gap:12px}
+.hrow:last-child{border-bottom:none}.hrow:hover{background:var(--bg3)}
+.htime{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3)}
+.hcount{font-weight:700;color:var(--orange);font-size:15px}
+.hdelta{font-size:12px;font-family:'Share Tech Mono',monospace}
+.hdelta.up{color:#00e676}.hdelta.dn{color:var(--red)}
+/* EMPTY */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;gap:12px;color:var(--text3);font-size:14px;font-weight:600;text-align:center;line-height:1.6}
+.loader{width:30px;height:30px;border:2px solid var(--border2);border-top-color:var(--red);border-radius:50%;animation:spin .8s linear infinite}
+.section{display:none}.section.active{display:block}
+/* FOOTER */
+.footer{margin-top:20px;display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--text3);font-family:'Share Tech Mono',monospace;flex-wrap:wrap;gap:8px;padding-top:16px;border-top:0.5px solid var(--border)}
+.owner{display:flex;align-items:center;gap:8px}
+.owner img{width:22px;height:22px;border-radius:50%;border:0.5px solid var(--border2)}
+/* TOAST */
 .toast{position:fixed;bottom:24px;right:24px;background:linear-gradient(135deg,var(--red),var(--orange));color:#fff;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:700;letter-spacing:.5px;z-index:10000;transform:translateY(60px);opacity:0;transition:all .3s;pointer-events:none}
 .toast.show{transform:translateY(0);opacity:1}
-.gang-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:16px}
-.gang-card{background:var(--bg2);border:0.5px solid var(--border2);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;cursor:pointer;transition:border-color .15s,background .15s;position:relative;overflow:hidden}
-.gang-card::before{content:"";position:absolute;top:0;left:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--red),var(--orange))}
-.gang-card:hover,.gang-card.active-filter{border-color:var(--orange);background:var(--bg3)}
-.gang-top{display:flex;align-items:center;justify-content:space-between;padding-left:8px}
-.gang-name{font-size:14px;font-weight:700;color:var(--text);letter-spacing:.5px}
-.gang-count{font-family:"Share Tech Mono",monospace;font-size:20px;font-weight:700;color:var(--orange)}
-.gang-bar{height:2px;background:var(--border);border-radius:1px;margin-top:8px;margin-left:8px;overflow:hidden}
-.gang-bar-fill{height:100%;background:linear-gradient(90deg,var(--red),var(--orange));border-radius:1px;transition:width .6s}
-.gang-solo{font-size:10px;color:var(--text3);margin-top:3px;padding-left:8px}
-.share-btn{background:var(--bg2);border:0.5px solid var(--border2);color:var(--text2);padding:7px 14px;border-radius:6px;cursor:pointer;font-family:"Barlow Condensed",sans-serif;font-size:13px;font-weight:700;letter-spacing:.5px;display:flex;align-items:center;gap:6px;transition:all .15s;text-transform:uppercase}
-.share-btn:hover{border-color:var(--orange);color:var(--orange)}
-.clear-gang-btn{background:linear-gradient(135deg,var(--red),var(--orange));border:none;color:#fff;font-size:11px;padding:3px 10px;border-radius:4px;font-weight:700;letter-spacing:.5px;cursor:pointer;font-family:"Barlow Condensed",sans-serif;display:none}
 </style>
-  <!-- Firebase SDK -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getDatabase, ref, set, get, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyDcJb0i2C_BeTm7laZ6vDIscFC1R6gjeoU",
-      authDomain: "list-player-f0e00.firebaseapp.com",
-      databaseURL: "https://list-player-f0e00-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "list-player-f0e00",
-      storageBucket: "list-player-f0e00.firebasestorage.app",
-      messagingSenderId: "92008883411",
-      appId: "1:92008883411:web:2f4be93f79136616b8e026"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-
-    // Expose DB functions to global scope
-    window._fbSet = (path, data) => set(ref(db, path), data);
-    window._fbUpdate = (path, data) => update(ref(db, path), data);
-    window._fbGet = (path) => get(ref(db, path));
-    window._fbListen = (path, cb) => onValue(ref(db, path), snap => cb(snap.val()));
-
-    // Load seenDB from Firebase on start
-    let firstLoad = true;
-    window._fbListen('seenPlayers', (data) => {
-      if (data) {
-        seenDB = data;
-        updateSeenStats();
-        renderSeen();
-        if(document.getElementById("stalkerDBList")) renderStalkerDB();
-      }
-      // Panggil loadData pertama kali SETELAH Firebase data tersedia
-      if (firstLoad) {
-        firstLoad = false;
-        window._firebaseReady = true;
-        loadData();
-      }
-    });
-
-    // Fallback: jika Firebase tidak ada data sama sekali (database kosong)
-    setTimeout(() => {
-      if (firstLoad) {
-        firstLoad = false;
-        window._firebaseReady = true;
-        loadData();
-      }
-    }, 3000);
-
-    console.log('Firebase connected!');
-  </script>
 </head>
 <body>
 <div class="wrap">
-
+  <!-- HEADER -->
   <div class="header">
     <div class="logo">
       <div class="logo-icon">iM</div>
@@ -312,23 +286,16 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
       </div>
     </div>
     <div class="header-right">
-      <div class="status-badge">
-        <div class="sdot" id="sdot"></div>
-        <span id="sstatus">Menghubungkan...</span>
-      </div>
-      <div class="status-badge" id="fbBadge" style="font-size:11px">
-        <div class="sdot off" id="fbDot"></div>
-        <span id="fbStatus">Firebase...</span>
-      </div>
+      <div class="status-badge"><div class="sdot" id="sdot"></div><span id="sstatus">Menghubungkan...</span></div>
+      <div class="status-badge" id="fbBadge" style="font-size:11px"><div class="sdot off" id="fbDot"></div><span id="fbStatus">Firebase...</span></div>
       <button class="rbtn" id="rbtn" onclick="loadData()">
         <svg id="rico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0018.49 15"/></svg>
         REFRESH
       </button>
     </div>
   </div>
-
   <div class="divider"></div>
-
+  <!-- STATS ROW 1 -->
   <div class="stats">
     <div class="stat">
       <div class="stat-label">Pemain Online</div>
@@ -354,13 +321,13 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
       <div class="fill-bar"><div class="fill-inner" id="sbar-lssd" style="width:0%;background:linear-gradient(90deg,#b464ff,#4a9eff)"></div></div>
     </div>
   </div>
-  <!-- Baris kedua: Slot Kosong & Avg Ping -->
-  <div class="stats" style="grid-template-columns:repeat(2,1fr);margin-top:-4px;margin-bottom:16px">
+  <!-- STATS ROW 2 -->
+  <div class="stats2">
     <div class="stat">
       <div class="stat-label">Slot Kosong</div>
       <div class="stat-val" id="s3">—</div>
       <div class="stat-sub" id="s3sub">memuat...</div>
-      <div class="fill-bar" style="margin-top:8px"><div class="fill-inner" id="sbar2" style="width:0%;background:linear-gradient(90deg,#4a9eff,#00e676)"></div></div>
+      <div class="fill-bar"><div class="fill-inner" id="sbar2" style="width:0%;background:linear-gradient(90deg,#4a9eff,#00e676)"></div></div>
     </div>
     <div class="stat">
       <div class="stat-label">Avg Ping</div>
@@ -368,9 +335,9 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
       <div class="stat-sub">rata-rata semua pemain</div>
     </div>
   </div>
-
-  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px">
-    <div class="tabs" style="margin-bottom:0">
+  <!-- TABS -->
+  <div class="tab-row">
+    <div class="tabs">
       <button class="tab active" onclick="switchTab('players',this)">⚔ Pemain</button>
       <button class="tab" onclick="switchTab('gangs',this)">🏴 Gang Stats</button>
       <button class="tab" onclick="switchTab('chart',this)">📊 Grafik</button>
@@ -385,26 +352,26 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
     </button>
   </div>
 
-  <!-- TAB PLAYERS -->
+  <!-- TAB PEMAIN -->
   <div class="section active" id="tab-players">
     <div class="controls">
       <div class="search-wrap">
         <span class="search-ico">🔍</span>
         <input type="text" id="sq" placeholder="Cari nama atau prefix (LSPD, BMC, SIN...)" oninput="filterAndToggleClear()">
-        <button class="clear-input-btn" id="clearSq" onclick="clearSearch('sq','clearSq')" style="display:none" title="Hapus">✕</button>
+        <button class="clear-input-btn" id="clearSq" onclick="clearSearch('sq','clearSq')" style="display:none">✕</button>
       </div>
       <div class="search-wrap" style="max-width:190px">
         <span class="search-ico" style="font-family:monospace;font-weight:700">#</span>
         <input type="number" id="sqid" placeholder="ID kantong..." oninput="filterAndToggleClear()" style="padding-left:28px">
-        <button class="clear-input-btn" id="clearSqid" onclick="clearSearch('sqid','clearSqid')" style="display:none" title="Hapus">✕</button>
+        <button class="clear-input-btn" id="clearSqid" onclick="clearSearch('sqid','clearSqid')" style="display:none">✕</button>
       </div>
       <select class="ctrl-select" id="ssort" onchange="filter()">
         <option value="id">Urut: ID</option>
         <option value="name">Urut: Nama A-Z</option>
         <option value="ping_asc">Urut: Ping ↑</option>
         <option value="ping_desc">Urut: Ping ↓</option>
-        <option value="dur_desc">Urut: Durasi ↓ Terlama</option>
-        <option value="dur_asc">Urut: Durasi ↑ Terbaru</option>
+        <option value="dur_desc">Durasi ↓ Terlama</option>
+        <option value="dur_asc">Durasi ↑ Terbaru</option>
       </select>
       <div class="view-toggle">
         <button class="vbtn active" onclick="setView('table',this)" title="Tabel">
@@ -416,20 +383,14 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
       </div>
       <div class="count-badge">Tampil: <span id="pcount">—</span> pemain</div>
     </div>
-
     <div id="view-table">
       <div class="table-wrap">
-        <div class="thead" style="grid-template-columns:64px 1fr 100px 110px 90px"><span>ID</span><span>Nama Pemain</span><span style="text-align:center">Ping</span><span style="text-align:center">Durasi</span><span style="text-align:center">Aksi</span></div>
-        <div class="plist" id="plist-table">
-          <div class="empty"><div class="loader"></div><span>Memuat data pemain...</span></div>
-        </div>
+        <div class="thead"><span>ID</span><span>Nama Pemain</span><span style="text-align:center">Ping</span><span style="text-align:center">Durasi</span><span style="text-align:center">Aksi</span></div>
+        <div class="plist" id="plist-table"><div class="empty"><div class="loader"></div><span>Memuat data pemain...</span></div></div>
       </div>
     </div>
-
     <div id="view-card" style="display:none">
-      <div class="card-grid" id="plist-card">
-        <div class="empty" style="grid-column:1/-1"><div class="loader"></div><span>Memuat data pemain...</span></div>
-      </div>
+      <div class="card-grid" id="plist-card"><div class="empty" style="grid-column:1/-1"><div class="loader"></div><span>Memuat...</span></div></div>
     </div>
   </div>
 
@@ -439,28 +400,40 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
       <div style="font-size:11px;color:var(--text2);letter-spacing:1px;text-transform:uppercase;font-weight:700">Gang / Instansi Online — klik untuk filter pemain</div>
       <button class="clear-gang-btn" id="clearGangBtn" onclick="clearGangFilter()">✕ Hapus Filter</button>
     </div>
-    <div class="gang-grid" id="gangGrid">
-      <div class="empty" style="grid-column:1/-1;padding:32px"><div class="loader"></div><span>Memuat data gang...</span></div>
-    </div>
+    <div class="gang-grid" id="gangGrid"><div class="empty" style="grid-column:1/-1;padding:32px"><div class="loader"></div><span>Memuat...</span></div></div>
     <div style="margin-top:16px">
       <div style="font-size:11px;color:var(--text2);letter-spacing:1px;text-transform:uppercase;font-weight:700;margin-bottom:10px">Pemain tanpa gang / instansi</div>
       <div class="table-wrap">
-        <div class="thead" style="grid-template-columns:64px 1fr 100px 110px 90px"><span>ID</span><span>Nama Pemain</span><span style="text-align:center">Ping</span><span style="text-align:center">Durasi</span><span style="text-align:center">Aksi</span></div>
-        <div class="plist" id="soloList" style="max-height:220px">
-          <div class="empty" style="padding:24px"><span>Memuat...</span></div>
-        </div>
+        <div class="thead" style="grid-template-columns:64px 1fr 100px 90px"><span>ID</span><span>Nama</span><span style="text-align:center">Ping</span><span style="text-align:center">Aksi</span></div>
+        <div class="plist" id="soloList" style="max-height:220px"><div class="empty" style="padding:24px"><span>Memuat...</span></div></div>
       </div>
     </div>
   </div>
 
   <!-- TAB CHART -->
   <div class="section" id="tab-chart">
-    <div class="chart-wrap">
+    <div class="chart-wrap" style="margin-bottom:14px">
       <div class="chart-title">📈 Grafik Jumlah Pemain — <span>Sesi Ini</span></div>
-      <canvas id="myChart" style="max-height:240px"></canvas>
-      <div style="margin-top:12px;font-size:12px;color:var(--text3);font-family:'Share Tech Mono',monospace;text-align:center">
-        Data dikumpulkan otomatis setiap 30 detik
+      <canvas id="myChart" style="max-height:220px"></canvas>
+      <div style="margin-top:10px;font-size:11px;color:var(--text3);font-family:'Share Tech Mono',monospace;text-align:center">Data dikumpulkan otomatis setiap 30 detik</div>
+    </div>
+    <!-- PEAK HOURS -->
+    <div class="chart-wrap">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <div class="chart-title" style="margin-bottom:0">⚡ Peak Hours — <span>Jam Tersibuk</span></div>
+        <div class="ph-tabs-row">
+          <button class="ph-tb act" onclick="phTab('hm',this)">Heatmap</button>
+          <button class="ph-tb" onclick="phTab('bar',this)">Per Jam</button>
+        </div>
       </div>
+      <div class="ph-mini-cards" id="phCards"><div style="grid-column:1/-1;font-size:11px;color:var(--text3);font-family:'Share Tech Mono',monospace">Terakumulasi seiring penggunaan...</div></div>
+      <div id="phHM">
+        <div class="hm-wrap"><div class="hm-grid" id="hmGrid"></div></div>
+        <div class="hm-leg"><span class="hm-leg-lbl">sepi</span><div class="hm-leg-steps" id="hmLeg"></div><span class="hm-leg-lbl">rame</span></div>
+        <div class="hm-tip" id="hmTip">hover sel untuk detail</div>
+      </div>
+      <div id="phBar" style="display:none"><div id="phBars" style="margin-top:4px"></div></div>
+      <div style="margin-top:10px;font-size:10px;color:var(--text3);font-family:'Share Tech Mono',monospace;text-align:center">Data peak hours terakumulasi dari history refresh • Semakin lama website dibuka, semakin akurat</div>
     </div>
   </div>
 
@@ -484,22 +457,19 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
         <button class="sf" onclick="setSFilter('online',this)">Online</button>
         <button class="sf" onclick="setSFilter('offline',this)">Offline</button>
       </div>
+      <button class="clean-btn" onclick="cleanDuplikat()">🧹 Bersihkan Duplikat</button>
     </div>
     <div class="table-wrap">
-      <div class="seen-thead" style="grid-template-columns:1fr 130px 130px 220px 100px"><span>Nama Pemain</span><span>Pertama Terlihat</span><span>Terakhir Keluar</span><span style="text-align:center">Durasi</span><span style="text-align:center">Status</span></div>
-      <div class="plist" id="seenList" style="max-height:440px">
-        <div class="empty" style="padding:40px"><span>Belum ada data.<br>Tunggu refresh pertama...</span></div>
-      </div>
+      <div class="seen-thead"><span>Nama Pemain</span><span>Pertama Terlihat</span><span>Terakhir Keluar</span><span style="text-align:center">Durasi</span><span style="text-align:center">Status</span></div>
+      <div class="plist" id="seenList" style="max-height:440px"><div class="empty" style="padding:40px"><span>Belum ada data.<br>Tunggu refresh pertama...</span></div></div>
     </div>
-    <div style="margin-top:10px;font-size:11px;color:var(--text3);font-family:'Share Tech Mono',monospace;text-align:center">
-      Data tersimpan permanen di Firebase • Terakumulasi setiap 30 detik
-    </div>
+    <div style="margin-top:10px;font-size:11px;color:var(--text3);font-family:'Share Tech Mono',monospace;text-align:center">Data tersimpan permanen di Firebase • Terakumulasi setiap 30 detik</div>
   </div>
 
   <!-- TAB JOURNEY -->
   <div class="section" id="tab-journey">
     <div style="font-size:11px;color:var(--text2);letter-spacing:1px;text-transform:uppercase;font-weight:700;margin-bottom:10px">Pilih pemain dari database:</div>
-    <div style="display:flex;gap:8px;margin-bottom:10px">
+    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
       <div class="search-wrap" style="flex:1">
         <span class="search-ico">🔍</span>
         <input type="text" id="journeyQ" placeholder="Cari nama pemain..." oninput="renderJourneyList()">
@@ -510,17 +480,12 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
         <button class="sf" onclick="setJFilter('offline',this)">Offline</button>
       </div>
     </div>
-    <div class="pj-player-list" id="journeyList">
-      <div class="empty" style="padding:24px"><span>Memuat database...</span></div>
-    </div>
-    <div id="journeyDetail" style="display:none;margin-top:14px">
+    <div class="pj-player-list" id="journeyList"><div class="empty" style="padding:24px"><span>Memuat database...</span></div></div>
+    <div id="journeyDetail" style="display:none">
       <div class="pj-detail">
         <div class="pj-dheader">
           <div class="pj-dav" id="jdAv"></div>
-          <div style="flex:1;min-width:0">
-            <div class="pj-dtitle" id="jdName"></div>
-            <div class="pj-dgang" id="jdGang"></div>
-          </div>
+          <div style="flex:1;min-width:0"><div class="pj-dtitle" id="jdName"></div><div class="pj-dgang" id="jdGang"></div></div>
           <div id="jdBadge"></div>
         </div>
         <div class="pj-cards" id="jdCards"></div>
@@ -553,30 +518,19 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
       </div>
       <div class="table-wrap">
         <div class="seen-thead" style="grid-template-columns:1fr 120px 90px"><span>Nama Pemain</span><span>Status</span><span style="text-align:center">Pantau</span></div>
-        <div class="plist" id="stalkerDBList" style="max-height:240px">
-          <div class="empty" style="padding:24px"><span>Memuat database...</span></div>
-        </div>
+        <div class="plist" id="stalkerDBList" style="max-height:240px"><div class="empty" style="padding:24px"><span>Memuat database...</span></div></div>
       </div>
     </div>
     <div style="font-size:11px;color:var(--text2);letter-spacing:1px;text-transform:uppercase;font-weight:700;margin-bottom:8px;margin-top:16px">Daftar Pantau Aktif:</div>
-    <div class="watch-list" id="watchList">
-      <div class="empty" style="padding:24px"><span>Belum ada pemain yang dipantau.</span></div>
-    </div>
+    <div class="watch-list" id="watchList"><div class="empty" style="padding:24px"><span>Belum ada pemain yang dipantau.</span></div></div>
     <div class="stalker-note">🔔 Notifikasi browser muncul saat pemain masuk atau keluar server</div>
   </div>
-
-
 
   <!-- TAB HISTORY -->
   <div class="section" id="tab-history">
     <div class="history-wrap">
-      <div class="history-header">
-        <span>🕐 History Jumlah Pemain Online</span>
-        <span id="hcount-badge">0 entri</span>
-      </div>
-      <div class="hlist" id="hlist">
-        <div class="empty" style="padding:40px"><span>Belum ada history.<br>Data terekam otomatis setiap refresh.</span></div>
-      </div>
+      <div class="history-header"><span>🕐 History Jumlah Pemain Online</span><span id="hcount-badge">0 entri</span></div>
+      <div class="hlist" id="hlist"><div class="empty" style="padding:40px"><span>Belum ada history.</span></div></div>
     </div>
   </div>
 
@@ -588,56 +542,59 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
     <span id="ts">Auto-refresh setiap 30 detik</span>
   </div>
 </div>
-
 <div class="toast" id="toast"></div>
 
 <script>
 const TARGET='https://servers-frontend.fivem.net/api/servers/single/zrvmg4';
 const PROXIES=[u=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,u=>`https://corsproxy.io/?${encodeURIComponent(u)}`,u=>`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`];
 let allPlayers=[],chartData={labels:[],counts:[]},history=[],myChart=null,currentView='table',seenDB={},seenFilter='all';
+let watchList=[],activeGangFilter=null,activeJourneyKey=null,journeyFilter='all';
+const peakData={};
 
-function pingInfo(p){
-  if(!p||p<=0||p>2000)return{cls:'pr2',dot:'r',txt:'?'};
-  if(p<80)return{cls:'pg',dot:'g',txt:p};
-  if(p<180)return{cls:'py',dot:'y',txt:p};
-  return{cls:'pr2',dot:'r',txt:p};
+// ── HELPERS ──
+function pingInfo(p){if(!p||p<=0||p>2000)return{cls:'pr2',dot:'r',txt:'?'};if(p<80)return{cls:'pg',dot:'g',txt:p};if(p<180)return{cls:'py',dot:'y',txt:p};return{cls:'pr2',dot:'r',txt:p};}
+function parseName(raw){const n=(raw||'').trim();const d=n.indexOf(' - ');const x=n.indexOf(' x ');if(d>0&&d<25)return{pfx:n.slice(0,d).trim(),nm:n.slice(d+3).trim()};if(d<0&&n.indexOf('-')>0){const d2=n.indexOf('-');if(d2>0&&d2<n.length-1)return{pfx:n.slice(0,d2).trim(),nm:n.slice(d2+1).trim()};}return{pfx:'',nm:n};}
+function nameToKey(name){return(name||'unknown').toLowerCase().replace(/[^a-z0-9_]/g,'_').slice(0,80);}
+function gangInitials(gang,name){if(gang)return gang.slice(0,4).toUpperCase();return(name||'??').split(/[\s-]+/).filter(Boolean).slice(0,2).map(p=>(p[0]||'?').toUpperCase()).join('').slice(0,4);}
+function formatDur(ms){if(!ms||ms<0)return'—';const s=Math.floor(ms/1000),h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;if(h>0)return h+'j '+m+'m';if(m>0)return m+'m '+sec+'d';return sec+'d';}
+
+// ── TOAST ──
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
+
+// ── COPY ──
+function copyName(name,btn){navigator.clipboard.writeText(name).then(()=>{btn.textContent='COPIED!';btn.classList.add('copied');showToast('Disalin: '+name.slice(0,24));setTimeout(()=>{btn.textContent='COPY';btn.classList.remove('copied');},1500);});}
+
+// ── SEARCH ──
+function matchSearch(name,q){if(!q)return true;const n=(name||'').toLowerCase();const tokens=n.split(/[\s-]+/).filter(Boolean);const{pfx}=parseName(name);if(pfx){pfx.toLowerCase().split(/[x\s-]+/).filter(Boolean).forEach(t=>{if(!tokens.includes(t))tokens.push(t);});tokens.push(pfx.toLowerCase());}return tokens.some(t=>t.startsWith(q));}
+function filterAndToggleClear(){const sq=document.getElementById('sq');const sqid=document.getElementById('sqid');const csq=document.getElementById('clearSq');const csqid=document.getElementById('clearSqid');csq.style.display=sq.value?'flex':'none';sq.classList.toggle('has-val',!!sq.value);csqid.style.display=sqid.value?'flex':'none';sqid.classList.toggle('has-val',!!sqid.value);filter();}
+function clearSearch(inputId,btnId){document.getElementById(inputId).value='';document.getElementById(btnId).style.display='none';document.getElementById(inputId).classList.remove('has-val');filter();}
+
+// ── FILTER ──
+function filter(){
+  const q=document.getElementById('sq').value.toLowerCase().trim();
+  const qid=document.getElementById('sqid').value.trim();
+  const sort=document.getElementById('ssort').value;
+  let res=[...allPlayers];
+  if(q)res=res.filter(p=>matchSearch(p.name,q));
+  if(qid)res=res.filter(p=>String(p.id)===qid||String(p.id).startsWith(qid));
+  if(sort==='name')res.sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  else if(sort==='ping_asc')res.sort((a,b)=>(a.ping||9999)-(b.ping||9999));
+  else if(sort==='ping_desc')res.sort((a,b)=>(b.ping||0)-(a.ping||0));
+  else if(sort==='dur_desc'||sort==='dur_asc'){const now=Date.now();res.sort((a,b)=>{function gd(p){const k=nameToKey(p.name);const db=seenDB[k];return db&&db.sessionStartMs?now-db.sessionStartMs:0;}return sort==='dur_desc'?gd(b)-gd(a):gd(a)-gd(b);});}
+  else res.sort((a,b)=>a.id-b.id);
+  document.getElementById('pcount').textContent=res.length.toLocaleString('id-ID');
+  renderTable(res);renderCards(res);
 }
 
-function parseName(raw){
-  const n=(raw||'').trim();
-  // Format: "moonlight - binyo" atau "969GxBOSMC-Sunny"
-  // Cari tanda pemisah: " - " (spasi-dash-spasi) atau "-" tanpa spasi
-  const d1=n.indexOf(' - ');
-  if(d1>0)return{pfx:n.slice(0,d1).trim(),nm:n.slice(d1+3).trim()};
-  // Cari "-" tanpa spasi, ambil bagian sebelumnya sebagai prefix (gang/instansi)
-  const d2=n.indexOf('-');
-  if(d2>0&&d2<n.length-1)return{pfx:n.slice(0,d2).trim(),nm:n.slice(d2+1).trim()};
-  return{pfx:'',nm:n};
-}
-
-function copyName(name,btn){
-  navigator.clipboard.writeText(name).then(()=>{
-    btn.textContent='COPIED!';btn.classList.add('copied');
-    showToast('Disalin: '+name.slice(0,24));
-    setTimeout(()=>{btn.textContent='COPY';btn.classList.remove('copied');},1500);
-  });
-}
-
-function showToast(msg){
-  const t=document.getElementById('toast');
-  t.textContent='✅ '+msg;t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2200);
-}
-
+// ── RENDER TABLE ──
 function renderTable(players){
   const el=document.getElementById('plist-table');
   if(!players.length){el.innerHTML='<div class="empty"><span>⚠️ Tidak ada pemain ditemukan</span></div>';return;}
   el.innerHTML=players.map(p=>{
     const pi=pingInfo(p.ping),{pfx,nm}=parseName(p.name),fn=(p.name||'Unknown').replace(/'/g,"\\'");
-    const dbKey=(p.name||'unknown').toLowerCase().replace(/[^a-z0-9_]/g,'_').slice(0,80);
-    const dbEntry=seenDB[dbKey];
+    const dbKey=nameToKey(p.name),dbEntry=seenDB[dbKey];
     const sessDur=dbEntry&&dbEntry.sessionStartMs?formatDur(Date.now()-dbEntry.sessionStartMs):'—';
-    return`<div class="prow" style="grid-template-columns:64px 1fr 100px 110px 90px">
+    return`<div class="prow">
       <span class="pid">#${p.id}</span>
       <span>${pfx?`<div class="ppfx">${pfx}</div>`:''}<div class="pname" title="${p.name||''}">${nm||p.name||'Unknown'}</div></span>
       <span class="pping ${pi.cls}"><span class="pingdot ${pi.dot}"></span>${pi.txt} ms</span>
@@ -647,127 +604,316 @@ function renderTable(players){
   }).join('');
 }
 
+// ── RENDER CARDS ──
 function renderCards(players){
   const el=document.getElementById('plist-card');
   if(!players.length){el.innerHTML='<div class="empty" style="grid-column:1/-1"><span>⚠️ Tidak ada pemain ditemukan</span></div>';return;}
   el.innerHTML=players.map(p=>{
     const pi=pingInfo(p.ping),{pfx,nm}=parseName(p.name),fn=(p.name||'Unknown').replace(/'/g,"\\'");
+    const dbKey=nameToKey(p.name),dbEntry=seenDB[dbKey];
+    const sessDur=dbEntry&&dbEntry.sessionStartMs?formatDur(Date.now()-dbEntry.sessionStartMs):'—';
     return`<div class="pcard">
       <div class="card-id">#${p.id}</div>
       ${pfx?`<div class="card-pfx">${pfx}</div>`:''}
       <div class="card-name" title="${p.name||''}">${nm||p.name||'Unknown'}</div>
       <div class="card-footer">
         <span class="card-ping ${pi.cls}"><span class="pingdot ${pi.dot}"></span>${pi.txt} ms</span>
+        <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--gold)">${sessDur}</span>
         <button class="card-copy" onclick="copyName('${fn}',this)">COPY</button>
       </div>
     </div>`;
   }).join('');
 }
 
-function matchSearch(name,q){
-  if(!q)return true;
-  const n=(name||'').toLowerCase();
-  // Pecah nama jadi token berdasarkan spasi, dash, underscore
-  const tokens=n.split(/[\s\-_]+/).filter(Boolean);
-  // Juga tambahkan prefix gang dari parseName sebagai token tersendiri
-  const {pfx,nm}=parseName(name);
-  if(pfx){
-    // Pecah prefix juga (contoh: "969GxBOSMC" -> ["969g","bosmc"])
-    const pfxTokens=pfx.toLowerCase().split(/[x\s\-_]+/).filter(Boolean);
-    pfxTokens.forEach(t=>{if(!tokens.includes(t))tokens.push(t);});
-    tokens.push(pfx.toLowerCase());
-  }
-  // Cocokkan jika ada token yang DIAWALI dengan query (bukan substring di tengah kata)
-  return tokens.some(t=>t.startsWith(q));
-}
+// ── VIEW TOGGLE ──
+function setView(v,btn){currentView=v;document.getElementById('view-table').style.display=v==='table'?'block':'none';document.getElementById('view-card').style.display=v==='card'?'block':'none';document.querySelectorAll('.vbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
 
-function filterAndToggleClear(){
-  const sq=document.getElementById('sq');
-  const sqid=document.getElementById('sqid');
-  const csq=document.getElementById('clearSq');
-  const csqid=document.getElementById('clearSqid');
-  csq.style.display=sq.value?'flex':'none';
-  sq.classList.toggle('has-val',!!sq.value);
-  csqid.style.display=sqid.value?'flex':'none';
-  sqid.classList.toggle('has-val',!!sqid.value);
-  filter();
-}
-
-function clearSearch(inputId,btnId){
-  document.getElementById(inputId).value='';
-  document.getElementById(btnId).style.display='none';
-  document.getElementById(inputId).classList.remove('has-val');
-  filter();
-}
-
-function filter(){
-  const q=document.getElementById('sq').value.toLowerCase().trim();
-  const qid=document.getElementById('sqid').value.trim();
-  const sort=document.getElementById('ssort').value;
-  let res=[...allPlayers];
-  // Filter by nama
-  if(q) res=res.filter(p=>matchSearch(p.name,q));
-  // Filter by ID kantong (exact match atau startsWith jika belum selesai ketik)
-  if(qid) res=res.filter(p=>String(p.id)===qid||String(p.id).startsWith(qid));
-  if(sort==='name')res.sort((a,b)=>(a.name||'').localeCompare(b.name||''));
-  else if(sort==='ping_asc')res.sort((a,b)=>(a.ping||9999)-(b.ping||9999));
-  else if(sort==='ping_desc')res.sort((a,b)=>(b.ping||0)-(a.ping||0));
-  else if(sort==='dur_desc'||sort==='dur_asc'){
-    const nowMs=Date.now();
-    res.sort((a,b)=>{
-      function getDur(p){
-        const k=(p.name||'unknown').toLowerCase().replace(/[^a-z0-9_]/g,'_').slice(0,80);
-        const db=seenDB[k];
-        return db&&db.sessionStartMs?nowMs-db.sessionStartMs:0;
-      }
-      return sort==='dur_desc'?getDur(b)-getDur(a):getDur(a)-getDur(b);
-    });
-  }
-  else res.sort((a,b)=>a.id-b.id);
-  document.getElementById('pcount').textContent=res.length.toLocaleString('id-ID');
-  renderTable(res);renderCards(res);
-}
-
-function setView(v,btn){
-  currentView=v;
-  document.getElementById('view-table').style.display=v==='table'?'block':'none';
-  document.getElementById('view-card').style.display=v==='card'?'block':'none';
-  document.querySelectorAll('.vbtn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-}
-
+// ── TABS ──
 function switchTab(name,btn){
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
   btn.classList.add('active');
-  if(name==='chart')updateChart();
+  if(name==='chart'){updateChart();buildPeakHours();}
   if(name==='gangs')buildGangStats(allPlayers);
   if(name==='seen')renderSeen();
   if(name==='journey'){renderJourneyList();}
   if(name==='stalker'){renderStalkerDB();}
 }
 
+// ── CHART ──
 function updateChart(){
   const ctx=document.getElementById('myChart').getContext('2d');
   if(myChart)myChart.destroy();
-  if(!chartData.labels.length){
-    document.getElementById('myChart').style.display='none';return;
-  }
+  if(!chartData.labels.length){document.getElementById('myChart').style.display='none';return;}
   document.getElementById('myChart').style.display='block';
-  myChart=new Chart(ctx,{
-    type:'line',
-    data:{labels:chartData.labels,datasets:[{label:'Pemain Online',data:chartData.counts,borderColor:'#ff3c3c',backgroundColor:'rgba(255,60,60,.07)',borderWidth:2,fill:true,tension:.4,pointBackgroundColor:'#ff8c00',pointRadius:4,pointHoverRadius:6}]},
-    options:{responsive:true,plugins:{legend:{labels:{color:'#a07880',font:{family:'Barlow Condensed',size:13}}},tooltip:{backgroundColor:'#180d10',titleColor:'#ff8c00',bodyColor:'#f0d0d5',borderColor:'#3d1a1e',borderWidth:1}},scales:{x:{ticks:{color:'#6a4850',font:{family:'Share Tech Mono',size:10}},grid:{color:'rgba(42,18,21,.8)'}},y:{ticks:{color:'#6a4850',font:{family:'Share Tech Mono',size:10}},grid:{color:'rgba(42,18,21,.8)'},beginAtZero:false}}}
-  });
+  myChart=new Chart(ctx,{type:'line',data:{labels:chartData.labels,datasets:[{label:'Pemain Online',data:chartData.counts,borderColor:'#ff3c3c',backgroundColor:'rgba(255,60,60,.07)',borderWidth:2,fill:true,tension:.4,pointBackgroundColor:'#ff8c00',pointRadius:4,pointHoverRadius:6}]},options:{responsive:true,plugins:{legend:{labels:{color:'#a07880',font:{family:'Barlow Condensed',size:13}}},tooltip:{backgroundColor:'#180d10',titleColor:'#ff8c00',bodyColor:'#f0d0d5',borderColor:'#3d1a1e',borderWidth:1}},scales:{x:{ticks:{color:'#6a4850',font:{family:'Share Tech Mono',size:10}},grid:{color:'rgba(42,18,21,.8)'}},y:{ticks:{color:'#6a4850',font:{family:'Share Tech Mono',size:10}},grid:{color:'rgba(42,18,21,.8)'},beginAtZero:false}}}});
 }
 
+// ── PEAK HOURS ──
+function recordPeakHour(count){const now=new Date();const day=now.getDay();const hour=now.getHours();if(!peakData[day])peakData[day]={};if(!peakData[day][hour])peakData[day][hour]=[];peakData[day][hour].push(count);}
+function getPeakAvg(day,hour){if(!peakData[day]||!peakData[day][hour]||!peakData[day][hour].length)return null;const arr=peakData[day][hour];return Math.round(arr.reduce((a,b)=>a+b,0)/arr.length);}
+function phCol(t){if(t<.15)return'#0c0608';if(t<.35)return'#1a0d10';if(t<.55)return'#3d1a1e';if(t<.72)return'#7a2510';if(t<.87)return'#cc4400';return'#ff3c3c';}
+
+function buildPeakHours(){
+  const DAYS=['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+  const DAYS_FULL=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+  const allVals=[];
+  for(let d=0;d<7;d++)for(let h=0;h<24;h++){const v=getPeakAvg(d,h);if(v!==null)allVals.push(v);}
+  if(!allVals.length){
+    document.getElementById('phCards').innerHTML='<div style="grid-column:1/-1;font-size:11px;color:var(--text3);font-family:\'Share Tech Mono\',monospace">Data peak hours terakumulasi seiring penggunaan website...</div>';
+    document.getElementById('hmGrid').innerHTML='<div style="grid-column:1/-1;font-size:11px;color:var(--text3);padding:16px 0;text-align:center;font-family:\'Share Tech Mono\',monospace">Belum cukup data • Biarkan website terbuka beberapa saat</div>';
+    return;
+  }
+  const mn=Math.min(...allVals),mx=Math.max(...allVals);
+  const avgByH=Array.from({length:24},(_,h)=>{const vals=[];for(let d=0;d<7;d++){const v=getPeakAvg(d,h);if(v!==null)vals.push(v);}return vals.length?Math.round(vals.reduce((a,b)=>a+b)/vals.length):null;});
+  const validH=avgByH.map((v,i)=>({v,i})).filter(x=>x.v!==null);
+  const pkH=validH.length?validH.reduce((a,b)=>b.v>a.v?b:a).i:22;
+  const qtH=validH.length?validH.reduce((a,b)=>b.v<a.v?b:a).i:4;
+  const pkV=avgByH[pkH]||0;
+  document.getElementById('phCards').innerHTML=[{l:'JAM TERSIBUK',v:pkH+':00',c:'r'},{l:'PEAK PLAYERS',v:pkV.toLocaleString('id-ID'),c:'o'},{l:'JAM SEPI',v:qtH+':00',c:''},{l:'DATA POIN',v:allVals.length+'x',c:''}].map(x=>`<div class="ph-mini-card"><div class="ph-mini-val ${x.c}">${x.v}</div><div class="ph-mini-lbl">${x.l}</div></div>`).join('');
+  const g=document.getElementById('hmGrid');g.innerHTML='';
+  const emp=document.createElement('div');g.appendChild(emp);
+  for(let h=0;h<24;h++){const el=document.createElement('div');el.className='hm-hdr';el.textContent=h;g.appendChild(el);}
+  for(let d=0;d<7;d++){
+    const lbl=document.createElement('div');lbl.className='hm-day-lbl';lbl.textContent=DAYS[d];g.appendChild(lbl);
+    for(let h=0;h<24;h++){
+      const v=getPeakAvg(d,h);const cell=document.createElement('div');cell.className='hm-cell';
+      if(v!==null){const t=(v-mn)/(mx-mn||1);cell.style.background=phCol(t);cell.onmouseenter=()=>{document.getElementById('hmTip').innerHTML=`<span>${DAYS_FULL[d]}</span> ${h}:00 · <span>${v.toLocaleString('id-ID')} pemain</span>`;};}
+      else{cell.style.background='#0c0608';cell.style.opacity='.3';}
+      g.appendChild(cell);
+    }
+  }
+  const leg=document.getElementById('hmLeg');leg.innerHTML='';
+  [.1,.3,.5,.7,.88,1].forEach(t=>{const s=document.createElement('div');s.className='hm-leg-step';s.style.background=phCol(t);leg.appendChild(s);});
+  const bars=document.getElementById('phBars');if(!bars)return;
+  const mxH=Math.max(...validH.map(x=>x.v));
+  bars.innerHTML=avgByH.map((v,h)=>{
+    if(v===null)return`<div class="ph-bar-row"><span class="ph-bar-lbl">${h}:00</span><div class="ph-bar-track"></div><span class="ph-bar-val">—</span></div>`;
+    const pct=Math.round(v/mxH*100);const t=(v-mn)/(mx-mn||1);const isPk=h===pkH;
+    return`<div class="ph-bar-row"><span class="ph-bar-lbl">${h}:00</span><div class="ph-bar-track"><div class="ph-bar-fill" style="width:${pct}%;background:${isPk?'var(--red)':phCol(t)}"></div></div><span class="ph-bar-val ${isPk?'pk':''}">${v.toLocaleString('id-ID')}</span></div>`;
+  }).join('');
+}
+
+function phTab(t,btn){document.getElementById('phHM').style.display=t==='hm'?'block':'none';document.getElementById('phBar').style.display=t==='bar'?'block':'none';document.querySelectorAll('.ph-tb').forEach(b=>b.classList.remove('act'));btn.classList.add('act');}
+
+// ── GANG STATS ──
+function buildGangStats(players){
+  const gangMap={};const solo=[];
+  players.forEach(p=>{const{pfx,nm}=parseName(p.name);if(pfx){const key=pfx.toUpperCase();if(!gangMap[key])gangMap[key]=[];gangMap[key].push(p);}else{solo.push(p);}});
+  const sorted=Object.entries(gangMap).sort((a,b)=>b[1].length-a[1].length);
+  const maxCount=sorted.length?sorted[0][1].length:1;
+  const grid=document.getElementById('gangGrid');
+  if(!sorted.length){grid.innerHTML='<div class="empty" style="grid-column:1/-1;padding:32px"><span>Tidak ada data gang.</span></div>';}
+  else{grid.innerHTML=sorted.map(([name,members])=>{const pct=Math.round(members.length/maxCount*100);const isActive=activeGangFilter===name;return`<div class="gang-card${isActive?' active-filter':''}" onclick="toggleGangFilter('${name.replace(/'/g,"\\'")}',this)"><div class="gang-top"><span class="gang-name">${name}</span><span class="gang-count">${members.length}</span></div><div class="gang-solo">${members.length} anggota online</div><div class="gang-bar"><div class="gang-bar-fill" style="width:${pct}%"></div></div></div>`;}).join('');}
+  renderSoloList(solo);
+}
+
+function renderSoloList(players){
+  const el=document.getElementById('soloList');
+  if(!players.length){el.innerHTML='<div class="empty" style="padding:20px"><span>Semua pemain memiliki prefix gang.</span></div>';return;}
+  el.innerHTML=players.map(p=>{const pi=pingInfo(p.ping);const fn=(p.name||'Unknown').replace(/'/g,"\\'");return`<div class="prow" style="grid-template-columns:64px 1fr 100px 90px"><span class="pid">#${p.id}</span><span><div class="pname">${p.name||'Unknown'}</div></span><span class="pping ${pi.cls}"><span class="pingdot ${pi.dot}"></span>${pi.txt} ms</span><span style="text-align:center"><button class="copy-btn" onclick="copyName('${fn}',this)">COPY</button></span></div>`;}).join('');
+}
+
+function toggleGangFilter(name,el){
+  if(activeGangFilter===name){clearGangFilter();return;}
+  activeGangFilter=name;document.getElementById('clearGangBtn').style.display='inline-flex';
+  document.querySelectorAll('.gang-card').forEach(c=>c.classList.remove('active-filter'));el.classList.add('active-filter');
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-players').classList.add('active');document.querySelectorAll('.tab')[0].classList.add('active');
+  document.getElementById('sq').value=name;filterAndToggleClear();showToast('Filter gang: '+name);
+}
+
+function clearGangFilter(){
+  activeGangFilter=null;document.getElementById('clearGangBtn').style.display='none';
+  document.getElementById('sq').value='';document.getElementById('sqid').value='';
+  document.getElementById('clearSq').style.display='none';document.getElementById('clearSqid').style.display='none';
+  document.getElementById('sq').classList.remove('has-val');document.getElementById('sqid').classList.remove('has-val');
+  filter();buildGangStats(allPlayers);
+}
+
+// ── SEEN ──
+async function updateSeenDB(players){
+  const now=new Date();const timeStr=now.toLocaleString('id-ID');const currentKeys=new Set(players.map(p=>nameToKey(p.name)));const updates={};
+  players.forEach(p=>{
+    const key=nameToKey(p.name);const existing=seenDB[key];const nowMs=now.getTime();
+    let sessionStart;
+    if(existing&&existing.sessionStartMs&&existing.online){sessionStart=existing.sessionStartMs;}
+    else{sessionStart=nowMs;}
+    const entry={name:p.name||'Unknown',gang:parseName(p.name).pfx||'',firstSeen:existing?existing.firstSeen:timeStr,lastSeen:timeStr,online:true,seenCount:existing?(existing.seenCount||1)+1:1,sessionStartMs:sessionStart,totalDurMs:existing?(existing.totalDurMs||0):0,todayDurMs:existing?(existing.todayDurMs||0):0};
+    if(existing&&existing.lastLeft)entry.lastLeft=existing.lastLeft;
+    seenDB[key]=entry;updates[key]=entry;
+  });
+  Object.keys(seenDB).forEach(key=>{
+    if(!currentKeys.has(key)&&seenDB[key].online){
+      const p=seenDB[key];const sessionMs=p.sessionStartMs?(now.getTime()-p.sessionStartMs):0;
+      seenDB[key]={...p,online:false,lastLeft:timeStr,sessionStartMs:null,totalDurMs:(p.totalDurMs||0)+sessionMs,todayDurMs:(p.todayDurMs||0)+sessionMs};
+      updates[key]=seenDB[key];
+    }
+  });
+  if(window._fbUpdate&&Object.keys(updates).length>0){try{await window._fbUpdate('seenPlayers',updates);}catch(e){console.warn('Firebase update failed:',e);}}
+  updateSeenStats();renderSeen();
+  if(document.getElementById('stalkerDBList'))renderStalkerDB();
+  if(document.getElementById('journeyList')&&activeJourneyKey)showJourney(activeJourneyKey);
+  if(document.getElementById('journeyList')&&document.getElementById('tab-journey').classList.contains('active'))renderJourneyList();
+  syncWatchStatus();
+}
+
+function updateSeenStats(){
+  const all=Object.values(seenDB);const online=all.filter(p=>p.online).length;const gangs=new Set(all.map(p=>p.gang).filter(Boolean)).size;
+  document.getElementById('seen-total').textContent=all.length.toLocaleString('id-ID');
+  document.getElementById('seen-now').textContent=online.toLocaleString('id-ID');
+  document.getElementById('seen-off').textContent=(all.length-online).toLocaleString('id-ID');
+  document.getElementById('seen-gangs').textContent=gangs.toLocaleString('id-ID');
+}
+
+function setSFilter(f,btn){seenFilter=f;document.querySelectorAll('#tab-seen .sf').forEach(b=>b.classList.remove('act'));btn.classList.add('act');renderSeen();}
+
+function renderSeen(){
+  const el=document.getElementById('seenList');
+  const q=(document.getElementById('seenQ').value||'').toLowerCase().trim();
+  const seenSortVal=document.getElementById('seenSort').value;
+  let list=Object.values(seenDB);
+  if(seenFilter==='online')list=list.filter(p=>p.online);
+  else if(seenFilter==='offline')list=list.filter(p=>!p.online);
+  if(q)list=list.filter(p=>(p.name||'').toLowerCase().includes(q)||(p.gang||'').toLowerCase().includes(q));
+  const nowMs=Date.now();
+  function getSessMs(p){return p.online&&p.sessionStartMs?nowMs-p.sessionStartMs:0;}
+  function getTodayMs(p){return(p.todayDurMs||0)+getSessMs(p);}
+  function getTotalMs(p){return(p.totalDurMs||0)+getSessMs(p);}
+  if(seenSortVal==='dur_desc')list.sort((a,b)=>getTodayMs(b)-getTodayMs(a));
+  else if(seenSortVal==='total_desc')list.sort((a,b)=>getTotalMs(b)-getTotalMs(a));
+  else list.sort((a,b)=>{if(a.online!==b.online)return a.online?-1:1;return getTodayMs(b)-getTodayMs(a);});
+  if(!list.length){el.innerHTML='<div class="empty" style="padding:32px"><span>Tidak ada data yang cocok.</span></div>';return;}
+  el.innerHTML=list.map(p=>{
+    const{pfx,nm}=parseName(p.name);
+    const sessMs=getSessMs(p);const todayMs=getTodayMs(p);const totalMs=getTotalMs(p);
+    const todayStr=formatDur(todayMs);const totalStr=formatDur(totalMs);
+    let durDisplay='—';
+    if(totalMs>0){
+      if(todayMs>0&&totalMs>todayMs){durDisplay=`<span style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--gold)">${totalStr}</span> <span style="display:inline-flex;align-items:center;background:rgba(255,140,0,.12);border:0.5px solid rgba(255,140,0,.3);border-radius:4px;padding:1px 6px;font-size:10px;color:var(--orange);margin-left:4px;font-family:'Share Tech Mono',monospace;white-space:nowrap">hari ini ${todayStr}</span>`;}
+      else if(todayMs>0){durDisplay=`<span style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--gold)">${todayStr}</span>`;}
+      else{durDisplay=`<span style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--text3)">${totalStr}</span>`;}
+    }
+    return`<div class="seen-row"><span>${pfx?`<div class="ppfx">${pfx}</div>`:''}<div class="pname" title="${p.name}">${nm||p.name}</div></span><span class="seen-time">${p.firstSeen||'—'}</span><span class="seen-time">${p.online?'—':(p.lastLeft||'—')}</span><span style="text-align:center">${durDisplay}</span><span style="text-align:center"><span class="seen-badge ${p.online?'on':'off'}">${p.online?'● Online':'○ Offline'}</span></span></div>`;
+  }).join('');
+}
+
+// ── CLEAN DUPLIKAT ──
+async function cleanDuplikat(){
+  const pwd=prompt('Masukkan password untuk membersihkan duplikat:');
+  if(!pwd)return;
+  if(pwd!=='nnontop'){showToast('❌ Password salah!');return;}
+  const groups={};
+  Object.entries(seenDB).forEach(([key,p])=>{const norm=(p.name||'').toLowerCase().trim();if(!groups[norm])groups[norm]=[];groups[norm].push({key,...p});});
+  let removed=0;const toDelete=[];
+  Object.values(groups).forEach(entries=>{
+    if(entries.length<=1)return;
+    entries.sort((a,b)=>{if(a.online!==b.online)return a.online?-1:1;return((b.totalDurMs||0)+(b.seenCount||0))-((a.totalDurMs||0)+(a.seenCount||0));});
+    const keep=entries[0];
+    entries.slice(1).forEach(dup=>{keep.totalDurMs=(keep.totalDurMs||0)+(dup.totalDurMs||0);keep.seenCount=(keep.seenCount||0)+(dup.seenCount||0);if(!keep.firstSeen||(dup.firstSeen&&dup.firstSeen<keep.firstSeen))keep.firstSeen=dup.firstSeen;toDelete.push(dup.key);removed++;});
+    seenDB[keep.key]=keep;if(window._fbUpdate)window._fbUpdate('seenPlayers/'+keep.key,keep).catch(()=>{});
+  });
+  for(const key of toDelete){delete seenDB[key];if(window._fbSet){try{await window._fbSet('seenPlayers/'+key,null);}catch(e){}}}
+  updateSeenStats();renderSeen();showToast('✅ '+removed+' duplikat dihapus & data digabung!');
+}
+
+// ── JOURNEY ──
+function setJFilter(f,btn){journeyFilter=f;document.querySelectorAll('#tab-journey .sf').forEach(b=>b.classList.remove('act'));btn.classList.add('act');renderJourneyList();}
+
+function renderJourneyList(){
+  const el=document.getElementById('journeyList');
+  const q=(document.getElementById('journeyQ').value||'').toLowerCase().trim();
+  let list=Object.values(seenDB);
+  if(journeyFilter==='online')list=list.filter(p=>p.online);
+  else if(journeyFilter==='offline')list=list.filter(p=>!p.online);
+  if(q)list=list.filter(p=>(p.name||'').toLowerCase().includes(q)||(p.gang||'').toLowerCase().includes(q));
+  const nowMs=Date.now();
+  list.sort((a,b)=>{if(a.online!==b.online)return a.online?-1:1;return((b.totalDurMs||0)+(b.online&&b.sessionStartMs?nowMs-b.sessionStartMs:0))-((a.totalDurMs||0)+(a.online&&a.sessionStartMs?nowMs-a.sessionStartMs:0));});
+  if(!list.length){el.innerHTML='<div class="empty" style="padding:24px"><span>Tidak ada pemain di database.</span></div>';return;}
+  el.innerHTML=list.map(p=>{
+    const{pfx,nm}=parseName(p.name);const key=nameToKey(p.name);const isActive=key===activeJourneyKey;
+    const sessMs=p.online&&p.sessionStartMs?nowMs-p.sessionStartMs:0;const totalMs=(p.totalDurMs||0)+sessMs;const initials=gangInitials(pfx,p.name);
+    return`<div class="pj-item${isActive?' pj-active':''}" onclick="showJourney('${key.replace(/'/g,"\\'")}')"><div class="pj-av ${p.online?'on':'off'}">${initials}</div><div style="flex:1;min-width:0">${pfx?`<div class="ppfx" style="font-size:10px">${pfx}</div>`:''}<div class="pname">${nm||p.name}</div></div><div style="text-align:right"><div style="color:var(--gold);font-size:12px;font-family:'Share Tech Mono',monospace">${formatDur(totalMs)}</div><div style="margin-top:3px"><span class="seen-badge ${p.online?'on':'off'}">${p.online?'● Online':'○ Offline'}</span></div></div></div>`;
+  }).join('');
+}
+
+function showJourney(key){
+  activeJourneyKey=key;const p=seenDB[key];if(!p)return;
+  renderJourneyList();
+  const{pfx,nm}=parseName(p.name);const nowMs=Date.now();
+  const sessMs=p.online&&p.sessionStartMs?nowMs-p.sessionStartMs:0;
+  const totalMs=(p.totalDurMs||0)+sessMs;const todayMs=(p.todayDurMs||0)+sessMs;const initials=gangInitials(pfx,p.name);
+  document.getElementById('journeyDetail').style.display='block';
+  const av=document.getElementById('jdAv');av.textContent=initials;av.className='pj-dav '+(p.online?'on':'off');
+  document.getElementById('jdName').textContent=nm||p.name;
+  document.getElementById('jdGang').textContent=pfx||'Tanpa Gang';
+  document.getElementById('jdBadge').innerHTML=`<span class="seen-badge ${p.online?'on':'off'}">${p.online?'● Online':'○ Offline'}</span>`;
+  document.getElementById('jdCards').innerHTML=[{l:'Total Durasi',v:formatDur(totalMs),cls:'ora'},{l:'Hari Ini',v:formatDur(todayMs),cls:'g'},{l:'Hari Aktif',v:(p.seenCount||1)+'x',cls:''},{l:'Sesi Tercatat',v:(p.seenCount||1)+'x',cls:'red'}].map(s=>`<div class="pj-card"><div class="pj-card-val ${s.cls}">${s.v}</div><div class="pj-card-lbl">${s.l}</div></div>`).join('');
+  const barsEl=document.getElementById('jdBars');
+  if(todayMs>0){const today=new Date().toLocaleDateString('id-ID');const dayMap={[today]:todayMs};const maxMs=todayMs;barsEl.innerHTML=Object.entries(dayMap).map(([d,ms])=>`<div class="pj-bar-row"><span class="pj-bar-label">${d}</span><div class="pj-bar-track"><div class="pj-bar-fill" style="width:${Math.round(ms/maxMs*100)}%"></div></div><span class="pj-bar-val">${formatDur(ms)}</span></div>`).join('');}
+  else{barsEl.innerHTML='<div style="font-size:12px;color:var(--text3);padding:8px 0">Data harian belum tersedia.</div>';}
+  const tlEl=document.getElementById('jdTimeline');
+  if(p.online&&p.sessionStartMs){tlEl.innerHTML=`<div class="pj-titem join"><div class="pj-ttime">${p.lastSeen||'—'}</div><div class="pj-tdesc">Masuk server</div></div><div class="pj-titem active"><div class="pj-ttime">Sekarang</div><div class="pj-tdesc">Sedang online</div><span class="pj-tdur on">${formatDur(sessMs)}</span></div>`;}
+  else{tlEl.innerHTML=`<div class="pj-titem leave"><div class="pj-ttime">${p.lastLeft||p.lastSeen||'—'}</div><div class="pj-tdesc">Terakhir terdeteksi</div></div>`;}
+}
+
+// ── STALKER ──
+function renderStalkerDB(){
+  const el=document.getElementById('stalkerDBList');if(!el)return;
+  const q=(document.getElementById('stalkerSearch').value||'').toLowerCase().trim();
+  const f=document.getElementById('stalkerFilter').value;
+  let list=Object.values(seenDB);
+  if(f==='online')list=list.filter(p=>p.online);
+  else if(f==='offline')list=list.filter(p=>!p.online);
+  if(q)list=list.filter(p=>(p.name||'').toLowerCase().includes(q)||(p.gang||'').toLowerCase().includes(q));
+  list.sort((a,b)=>a.online===b.online?0:a.online?-1:1);
+  if(!list.length){el.innerHTML='<div class="empty" style="padding:24px"><span>Tidak ada pemain di database.</span></div>';return;}
+  const watching=new Set(watchList.map(w=>w.name.toLowerCase()));
+  el.innerHTML=list.map(p=>{
+    const{pfx,nm}=parseName(p.name);const isWatching=watching.has((p.name||'').toLowerCase());
+    return`<div class="seen-row" style="grid-template-columns:1fr 120px 90px"><span>${pfx?`<div class="ppfx">${pfx}</div>`:''}<div class="pname">${nm||p.name}</div></span><span style="text-align:center"><span class="seen-badge ${p.online?'on':'off'}">${p.online?'● Online':'○ Offline'}</span></span><span style="text-align:center">${isWatching?`<button class="copy-btn copied" onclick="removeWatchByName('${(p.name||'').replace(/'/g,"\\'")}',this)">✓ Dipantau</button>`:`<button class="copy-btn" onclick="addWatchFromDB('${(p.name||'').replace(/'/g,"\\'")}',this)">+ Pantau</button>`}</span></div>`;
+  }).join('');
+}
+
+function addWatchFromDB(name,btn){
+  if(watchList.find(w=>w.name.toLowerCase()===name.toLowerCase()))return;
+  const{pfx}=parseName(name);const initials=gangInitials(pfx,name);
+  watchList.push({name,gang:pfx,online:false,sinceStr:'',initials,addedAt:new Date()});
+  syncWatchStatus();renderWatchList();renderStalkerDB();
+  if(Notification&&Notification.permission==='default')Notification.requestPermission();
+  showToast('Memantau: '+name.slice(0,24));
+}
+
+function removeWatchByName(name,btn){const idx=watchList.findIndex(w=>w.name.toLowerCase()===name.toLowerCase());if(idx!==-1){watchList.splice(idx,1);renderWatchList();renderStalkerDB();}}
+
+function removeWatch(i){watchList.splice(i,1);renderWatchList();}
+
+function syncWatchStatus(){
+  watchList.forEach(w=>{
+    const found=allPlayers.find(p=>(p.name||'').toLowerCase()===w.name.toLowerCase());
+    const wasOnline=w.online;w.online=!!found;
+    if(found){w.id=found.id;if(!wasOnline){w.sinceStr=new Date().toLocaleTimeString('id-ID');sendNotif('🟢 '+w.name+' masuk server!','iMe RP — Stalker Mode');}}
+    else{if(wasOnline)sendNotif('🔴 '+w.name+' keluar server!','iMe RP — Stalker Mode');}
+  });
+  if(watchList.length)renderWatchList();
+}
+
+function sendNotif(body,title){if(Notification&&Notification.permission==='granted')new Notification(title,{body});}
+
+function renderWatchList(){
+  const el=document.getElementById('watchList');
+  if(!watchList.length){el.innerHTML='<div class="empty" style="padding:24px"><span>Belum ada pemain yang dipantau.</span></div>';return;}
+  el.innerHTML=watchList.map((w,i)=>{
+    const dur=w.online&&w.sinceStr?'Sejak '+w.sinceStr:w.online?'Online':'Tidak online';
+    return`<div class="watch-item ${w.online?'is-online':''}"><div class="w-avatar ${w.online?'on':'off'}">${w.initials}</div><div style="flex:1;min-width:0"><div class="w-name">${w.name}</div>${w.gang?`<div class="w-gang">${w.gang}</div>`:''}</div><div style="text-align:right;flex-shrink:0"><div class="w-status ${w.online?'on':'off'}"><span class="w-sdot ${w.online?'on':'off'}"></span>${w.online?'Online #'+(w.id||'?'):'Offline'}</div><div class="w-dur">${dur}</div></div><button class="w-del" onclick="removeWatch(${i})" title="Hapus">×</button></div>`;
+  }).join('');
+}
+
+// ── HISTORY ──
 function addHistory(count){
-  const now=new Date();
-  const prev=history.length?history[0].count:null;
-  const delta=prev!==null?count-prev:0;
-  history.unshift({time:now.toLocaleTimeString('id-ID'),count,delta});
-  if(history.length>60)history.pop();
+  const now=new Date();const timeStr=now.toLocaleTimeString('id-ID');const prev=history.length?history[0].count:null;const delta=prev!==null?count-prev:0;
+  history.unshift({time:timeStr,count,delta});if(history.length>60)history.pop();
   const label=now.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
   chartData.labels.push(label);chartData.counts.push(count);
   if(chartData.labels.length>30){chartData.labels.shift();chartData.counts.shift();}
@@ -775,762 +921,71 @@ function addHistory(count){
 }
 
 function renderHistory(){
-  const el=document.getElementById('hlist');
-  document.getElementById('hcount-badge').textContent=history.length+' entri';
+  const el=document.getElementById('hlist');document.getElementById('hcount-badge').textContent=history.length+' entri';
   if(!history.length){el.innerHTML='<div class="empty" style="padding:32px"><span>Belum ada history.</span></div>';return;}
-  el.innerHTML=history.map((h,i)=>{
-    const dh=i===history.length-1?'':h.delta>0?`<span class="hdelta up">▲ +${h.delta}</span>`:h.delta<0?`<span class="hdelta dn">▼ ${h.delta}</span>`:`<span class="hdelta" style="color:var(--text3)">— sama</span>`;
-    return`<div class="hrow"><span class="htime">${h.time}</span><span class="hcount">${h.count.toLocaleString('id-ID')} pemain</span>${dh}</div>`;
-  }).join('');
+  el.innerHTML=history.map((h,i)=>{const dh=i===history.length-1?'':h.delta>0?`<span class="hdelta up">▲ +${h.delta}</span>`:h.delta<0?`<span class="hdelta dn">▼ ${h.delta}</span>`:`<span class="hdelta" style="color:var(--text3)">— sama</span>`;return`<div class="hrow"><span class="htime">${h.time}</span><span class="hcount">${h.count.toLocaleString('id-ID')} pemain</span>${dh}</div>`;}).join('');
 }
 
-// ── DURASI HELPERS ──
-function formatDur(ms) {
-  if (!ms || ms < 0) return '—';
-  const totalSec = Math.floor(ms / 1000);
-  const h = Math.floor(totalSec / 3600);
-  const m = Math.floor((totalSec % 3600) / 60);
-  const s = totalSec % 60;
-  if (h > 0) return h + 'j ' + m + 'm';
-  if (m > 0) return m + 'm ' + s + 'd';
-  return s + 'd';
+// ── SHARE LINK ──
+function shareLink(){
+  const q=document.getElementById('sq').value.trim();const qid=document.getElementById('sqid').value.trim();
+  const params=new URLSearchParams();if(q)params.set('gang',q);if(qid)params.set('id',qid);
+  const url=window.location.origin+window.location.pathname+(params.toString()?'?'+params.toString():'');
+  navigator.clipboard.writeText(url).then(()=>showToast('Link disalin! Bagikan ke teman kamu.'));
 }
 
-function formatDurMs(ms) {
-  if (!ms || ms < 0) return 0;
-  return ms;
+// ── URL PARAMS ──
+function loadUrlParams(){
+  const params=new URLSearchParams(window.location.search);const gang=params.get('gang');const id=params.get('id');
+  if(gang){document.getElementById('sq').value=gang;document.getElementById('clearSq').style.display='flex';document.getElementById('sq').classList.add('has-val');}
+  if(id){document.getElementById('sqid').value=id;document.getElementById('clearSqid').style.display='flex';document.getElementById('sqid').classList.add('has-val');}
 }
 
-// ── PLAYER JOURNEY ──
-let journeyFilter = 'all';
-let activeJourneyKey = null;
-
-function gangInitials(gang, name) {
-  if (gang) return gang.slice(0,4).toUpperCase();
-  return (name||'??').split(/[\s\-]+/).filter(Boolean).slice(0,2).map(p=>(p[0]||'?').toUpperCase()).join('').slice(0,4);
-}
-
-function setJFilter(f, btn) {
-  journeyFilter = f;
-  document.querySelectorAll('#tab-journey .sf').forEach(b => b.classList.remove('act'));
-  btn.classList.add('act');
-  renderJourneyList();
-}
-
-function renderJourneyList() {
-  const el = document.getElementById('journeyList');
-  const q = (document.getElementById('journeyQ').value||'').toLowerCase().trim();
-  let list = Object.values(seenDB);
-  if (journeyFilter === 'online') list = list.filter(p => p.online);
-  else if (journeyFilter === 'offline') list = list.filter(p => !p.online);
-  if (q) list = list.filter(p => (p.name||'').toLowerCase().includes(q)||(p.gang||'').toLowerCase().includes(q));
-  list.sort((a,b) => {
-    if (a.online !== b.online) return a.online ? -1 : 1;
-    return ((b.totalDurMs||0)+(b.online&&b.sessionStartMs?Date.now()-b.sessionStartMs:0)) -
-           ((a.totalDurMs||0)+(a.online&&a.sessionStartMs?Date.now()-a.sessionStartMs:0));
-  });
-  if (!list.length) {
-    el.innerHTML = '<div class="empty" style="padding:24px"><span>Tidak ada pemain di database.</span></div>';
-    return;
-  }
-  el.innerHTML = list.map(p => {
-    const {pfx,nm} = parseName(p.name);
-    const key = (p.name||'unknown').toLowerCase().replace(/[^a-z0-9_]/g,'_').slice(0,80);
-    const isActive = key === activeJourneyKey;
-    const sessMs = p.online && p.sessionStartMs ? Date.now()-p.sessionStartMs : 0;
-    const totalMs = (p.totalDurMs||0)+sessMs;
-    const initials = gangInitials(pfx, p.name);
-    return `<div class="pj-item${isActive?' pj-active':''}" onclick="showJourney('${key.replace(/'/g,"\'")}')">
-      <div class="pj-av ${p.online?'on':'off'}">${initials}</div>
-      <div class="pj-iname">
-        ${pfx?`<div class="ppfx" style="font-size:10px">${pfx}</div>`:''}
-        <div class="pname">${nm||p.name}</div>
-      </div>
-      <div class="pj-idur">
-        <div style="color:var(--gold);font-size:12px">${formatDur(totalMs)}</div>
-        <div style="margin-top:2px"><span class="seen-badge ${p.online?'on':'off'}">${p.online?'● Online':'○ Offline'}</span></div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function showJourney(key) {
-  activeJourneyKey = key;
-  const p = seenDB[key];
-  if (!p) return;
-  renderJourneyList();
-
-  const {pfx,nm} = parseName(p.name);
-  const sessMs = p.online && p.sessionStartMs ? Date.now()-p.sessionStartMs : 0;
-  const totalMs = (p.totalDurMs||0)+sessMs;
-  const todayMs = (p.todayDurMs||0)+sessMs;
-  const initials = gangInitials(pfx, p.name);
-
-  document.getElementById('journeyDetail').style.display = 'block';
-  const av = document.getElementById('jdAv');
-  av.textContent = initials;
-  av.className = 'pj-dav ' + (p.online?'on':'off');
-  document.getElementById('jdName').textContent = nm||p.name;
-  document.getElementById('jdGang').textContent = pfx || 'Tanpa Gang';
-  document.getElementById('jdBadge').innerHTML = `<span class="seen-badge ${p.online?'on':'off'}">${p.online?'● Online':'○ Offline'}</span>`;
-
-  // Hitung hari aktif dari sessions
-  const sessions = p.sessions || [];
-  const activeDays = new Set(sessions.map(s=>s.date||'')).size || (p.seenCount ? Math.min(p.seenCount,7) : 1);
-
-  document.getElementById('jdCards').innerHTML = [
-    {l:'Total Durasi', v:formatDur(totalMs), cls:'ora'},
-    {l:'Hari Ini', v:formatDur(todayMs), cls:'g'},
-    {l:'Hari Aktif', v:(activeDays||p.seenCount||1)+'x', cls:''},
-    {l:'Sesi Tercatat', v:(p.seenCount||1)+'x', cls:'red'},
-  ].map(s=>`<div class="pj-card"><div class="pj-card-val ${s.cls}">${s.v}</div><div class="pj-card-lbl">${s.l}</div></div>`).join('');
-
-  // Bars per hari dari sessions atau estimasi
-  const dayMap = {};
-  if (sessions.length) {
-    sessions.forEach(s => {
-      if (s.date && s.durMs) dayMap[s.date] = (dayMap[s.date]||0)+s.durMs;
-    });
-  }
-  // Jika tidak ada data sessions, tampilkan estimasi dari todayMs
-  if (!Object.keys(dayMap).length) {
-    const today = new Date().toLocaleDateString('id-ID');
-    if (todayMs > 0) dayMap[today] = todayMs;
-  }
-  const dayEntries = Object.entries(dayMap).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,7);
-  const maxDayMs = dayEntries.length ? Math.max(...dayEntries.map(d=>d[1])) : 1;
-  const barsEl = document.getElementById('jdBars');
-  if (dayEntries.length) {
-    barsEl.innerHTML = dayEntries.map(([d,ms])=>`
-      <div class="pj-bar-row">
-        <span class="pj-bar-label">${d}</span>
-        <div class="pj-bar-track"><div class="pj-bar-fill" style="width:${Math.round(ms/maxDayMs*100)}%"></div></div>
-        <span class="pj-bar-val">${formatDur(ms)}</span>
-      </div>`).join('');
-  } else {
-    barsEl.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:8px 0">Data harian belum tersedia. Terakumulasi setiap refresh.</div>';
-  }
-
-  // Timeline sesi
-  const tlEl = document.getElementById('jdTimeline');
-  if (sessions.length) {
-    tlEl.innerHTML = sessions.slice().reverse().map(s=>`
-      <div class="pj-titem ${s.type}">
-        <div class="pj-ttime">${s.time}</div>
-        <div class="pj-tdesc">${s.type==='join'?'Masuk server':s.type==='active'?'Sedang online':'Keluar server'}</div>
-        ${s.durMs?`<span class="pj-tdur ${s.type==='active'?'on':'off'}">${formatDur(s.durMs)}</span>`:''}
-      </div>`).join('');
-  } else {
-    // Tampilkan info sesi sekarang jika online
-    if (p.online && p.sessionStartMs) {
-      tlEl.innerHTML = `
-        <div class="pj-titem join">
-          <div class="pj-ttime">${p.lastSeen||'—'}</div>
-          <div class="pj-tdesc">Masuk server</div>
-        </div>
-        <div class="pj-titem active">
-          <div class="pj-ttime">Sekarang</div>
-          <div class="pj-tdesc">Sedang online</div>
-          <span class="pj-tdur on">${formatDur(sessMs)}</span>
-        </div>`;
-    } else {
-      tlEl.innerHTML = `
-        <div class="pj-titem leave">
-          <div class="pj-ttime">${p.lastLeft||p.lastSeen||'—'}</div>
-          <div class="pj-tdesc">Terakhir terdeteksi</div>
-        </div>`;
-    }
-  }
-}
-
-// Hook journey tab
-// ── STALKER MODE ──
-let watchList = [];
-
-function renderStalkerDB() {
-  const el = document.getElementById('stalkerDBList');
-  if (!el) return;
-  const q = (document.getElementById('stalkerSearch').value || '').toLowerCase().trim();
-  const f = document.getElementById('stalkerFilter').value;
-  let list = Object.values(seenDB);
-  if (f === 'online') list = list.filter(p => p.online);
-  else if (f === 'offline') list = list.filter(p => !p.online);
-  if (q) list = list.filter(p => (p.name||'').toLowerCase().includes(q) || (p.gang||'').toLowerCase().includes(q));
-  list.sort((a,b) => a.online===b.online ? 0 : a.online ? -1 : 1);
-  if (!list.length) {
-    el.innerHTML = '<div class="empty" style="padding:24px"><span>Tidak ada pemain di database.</span></div>';
-    return;
-  }
-  const watching = new Set(watchList.map(w => w.name.toLowerCase()));
-  el.innerHTML = list.map(p => {
-    const {pfx,nm} = parseName(p.name);
-    const isWatching = watching.has((p.name||'').toLowerCase());
-    return `<div class="seen-row" style="grid-template-columns:1fr 120px 90px">
-      <span>
-        ${pfx?`<div class="ppfx">${pfx}</div>`:''}
-        <div class="pname">${nm||p.name}</div>
-      </span>
-      <span style="text-align:center"><span class="seen-badge ${p.online?'on':'off'}">${p.online?'● Online':'○ Offline'}</span></span>
-      <span style="text-align:center">
-        ${isWatching
-          ? `<button class="copy-btn copied" onclick="removeWatchByName('${(p.name||'').replace(/'/g,"\'")}',this)">✓ Dipantau</button>`
-          : `<button class="copy-btn" onclick="addWatchFromDB('${(p.name||'').replace(/'/g,"\'")}',this)">+ Pantau</button>`
-        }
-      </span>
-    </div>`;
-  }).join('');
-}
-
-function addWatchFromDB(name, btn) {
-  if (watchList.find(w => w.name.toLowerCase() === name.toLowerCase())) return;
-  const {pfx} = parseName(name);
-  const initials = name.split(/[\s\-]+/).filter(Boolean).slice(0,2).map(p=>(p[0]||'?').toUpperCase()).join('');
-  watchList.push({name, gang:pfx, online:false, sinceStr:'', initials, addedAt:new Date()});
-  syncWatchStatus();
-  renderWatchList();
-  renderStalkerDB();
-  if (Notification && Notification.permission === 'default') Notification.requestPermission();
-  showToast('Memantau: ' + name.slice(0,24));
-}
-
-function removeWatchByName(name, btn) {
-  const idx = watchList.findIndex(w => w.name.toLowerCase() === name.toLowerCase());
-  if (idx !== -1) { watchList.splice(idx, 1); renderWatchList(); renderStalkerDB(); }
-}
-
-function addWatch() {
-  const v = document.getElementById('watchInput').value.trim();
-  if (!v) return;
-  if (watchList.find(w => w.name.toLowerCase() === v.toLowerCase())) {
-    showToast('Pemain sudah ada di daftar pantau!');
-    return;
-  }
-  const {pfx} = parseName(v);
-  const initials = v.split(/[\s\-]+/).filter(Boolean).slice(0,2).map(p => (p[0]||'?').toUpperCase()).join('');
-  watchList.push({name:v, gang:pfx, online:false, sinceStr:'', initials, addedAt:new Date()});
-  document.getElementById('watchInput').value = '';
-  syncWatchStatus();
-  renderWatchList();
-  // Request notification permission
-  if (Notification && Notification.permission === 'default') Notification.requestPermission();
-}
-
-function removeWatch(i) {
-  watchList.splice(i, 1);
-  renderWatchList();
-}
-
-function syncWatchStatus() {
-  watchList.forEach(w => {
-    const found = allPlayers.find(p => (p.name||'').toLowerCase().includes(w.name.toLowerCase()) || w.name.toLowerCase().includes((p.name||'').toLowerCase()));
-    const wasOnline = w.online;
-    w.online = !!found;
-    if (found) {
-      w.id = found.id;
-      if (!wasOnline) {
-        w.sinceStr = new Date().toLocaleTimeString('id-ID');
-        sendNotif('🟢 ' + w.name + ' masuk server!', 'iMe RP — Stalker Mode');
-      }
-    } else {
-      if (wasOnline) {
-        sendNotif('🔴 ' + w.name + ' keluar server!', 'iMe RP — Stalker Mode');
-      }
-    }
-  });
-}
-
-function sendNotif(body, title) {
-  if (Notification && Notification.permission === 'granted') {
-    new Notification(title, {body, icon:'https://servers-frontend.fivem.net/favicon.ico'});
-  }
-}
-
-function renderWatchList() {
-  const el = document.getElementById('watchList');
-  if (!watchList.length) {
-    el.innerHTML = '<div class="empty" style="padding:32px"><span>Belum ada pemain yang dipantau.<br>Tambahkan nama karakter di atas.</span></div>';
-    return;
-  }
-  el.innerHTML = watchList.map((w,i) => {
-    const dur = w.online && w.sinceStr ? 'Sejak ' + w.sinceStr : w.online ? 'Online' : 'Tidak online';
-    return `<div class="watch-item ${w.online?'is-online':''}">
-      <div class="w-avatar ${w.online?'on':'off'}">${w.initials}</div>
-      <div style="flex:1;min-width:0">
-        <div class="w-name">${w.name}</div>
-        ${w.gang ? `<div class="w-gang">${w.gang}</div>` : ''}
-      </div>
-      <div style="text-align:right;flex-shrink:0">
-        <div class="w-status ${w.online?'on':'off'}">
-          <span class="w-sdot ${w.online?'on':'off'}"></span>
-          ${w.online ? 'Online #' + (w.id||'?') : 'Offline'}
-        </div>
-        <div class="w-dur">${dur}</div>
-      </div>
-      <button class="w-del" onclick="removeWatch(${i})" title="Hapus">×</button>
-    </div>`;
-  }).join('');
-}
-
-// ── SERVER MOOD ──
-function calcMood(players, maxC, avg) {
-  const online = players.length;
-  const pct = Math.round(online / maxC * 100);
-  const gangs = new Set(players.map(p => parseName(p.name).pfx).filter(Boolean)).size;
-  const polisi = players.filter(p => {
-    const g = (parseName(p.name).pfx || '').toLowerCase();
-    return g.includes('lspd') || g.includes('bcso') || g.includes('doc') || g.includes('polisi') || g.includes('swat') || g.includes('fib');
-  }).length;
-  const polisiRatio = online > 0 ? polisi / online : 0;
-
-  let mood;
-  if (pct >= 70 || avg >= 180) {
-    mood = {
-      key:'hot', emoji:'🔥', title:'Server Panas',
-      desc:`Server hampir penuh (${pct}% kapasitas) dengan ping rata-rata ${avg}ms. Kemungkinan besar ada event besar atau war sedang terjadi. Performa bisa terganggu.`,
-      factors:[
-        {l:'Kepadatan Server', v: pct+'% penuh ('+online+' pemain)', pct, col:'#ff3c3c'},
-        {l:'Avg Ping', v: avg+' ms', pct:Math.min(100,Math.round(avg/3)), col:'#ff8c00'},
-        {l:'Gang Aktif', v: gangs+' gang terdeteksi', pct:Math.min(100,gangs*3), col:'#ff8c00'},
-        {l:'Officer Online', v: polisi+' officer', pct:Math.round(polisiRatio*100), col:'#4a9eff'},
-      ]
-    };
-  } else if (polisiRatio >= 0.12) {
-    mood = {
-      key:'cop', emoji:'👮', title:'Polisi Dominan',
-      desc:`${polisi} officer dari ${online} pemain online (${Math.round(polisiRatio*100)}%). Instansi hukum mendominasi server. Aktivitas kriminal mungkin ditekan.`,
-      factors:[
-        {l:'Officer Online', v: polisi+' dari '+online+' pemain', pct:Math.round(polisiRatio*100), col:'#4a9eff'},
-        {l:'Kepadatan Server', v: pct+'% kapasitas', pct, col:'#4a9eff'},
-        {l:'Gang Aktif', v: gangs+' gang', pct:Math.min(100,gangs*3), col:'#ff8c00'},
-        {l:'Avg Ping', v: avg+' ms', pct:Math.min(100,Math.round(avg/3)), col:'#00e676'},
-      ]
-    };
-  } else if (pct <= 15 || online <= 100) {
-    mood = {
-      key:'chill', emoji:'😴', title:'Server Sepi',
-      desc:`Hanya ${online} pemain online (${pct}% kapasitas). Ping rata-rata ${avg}ms — sangat stabil. Waktu ideal untuk farming, balapan, atau RP santai.`,
-      factors:[
-        {l:'Pemain Online', v: online+' orang ('+pct+'%)', pct, col:'#4a7ab5'},
-        {l:'Avg Ping', v: avg+' ms — stabil', pct:Math.min(100,Math.round(avg/3)), col:'#00e676'},
-        {l:'Gang Aktif', v: gangs+' gang', pct:Math.min(100,gangs*3), col:'#4a7ab5'},
-        {l:'Slot Kosong', v: (maxC-online)+' slot tersedia', pct:100-pct, col:'#00e676'},
-      ]
-    };
-  } else if (gangs >= 20) {
-    mood = {
-      key:'chaos', emoji:'💣', title:'Chaos Mode',
-      desc:`${gangs} gang aktif sekarang dengan ${online} pemain. Server penuh aktivitas — siap-siap dengan situasi tidak terduga di mana saja.`,
-      factors:[
-        {l:'Gang Aktif', v: gangs+' gang terdeteksi', pct:Math.min(100,gangs*3), col:'#ff3c3c'},
-        {l:'Pemain Online', v: online+' orang ('+pct+'%)', pct, col:'#ff8c00'},
-        {l:'Avg Ping', v: avg+' ms', pct:Math.min(100,Math.round(avg/3)), col:'#ff8c00'},
-        {l:'Officer Online', v: polisi+' officer', pct:Math.round(polisiRatio*100), col:'#4a9eff'},
-      ]
-    };
-  } else {
-    mood = {
-      key:'normal', emoji:'😐', title:'Normal',
-      desc:`Server dalam kondisi normal dengan ${online} pemain (${pct}% kapasitas). Ping rata-rata ${avg}ms. Tidak ada aktivitas luar biasa yang terdeteksi.`,
-      factors:[
-        {l:'Pemain Online', v: online+' orang ('+pct+'%)', pct, col:'#4a9eff'},
-        {l:'Gang Aktif', v: gangs+' gang', pct:Math.min(100,gangs*3), col:'#ff8c00'},
-        {l:'Avg Ping', v: avg+' ms', pct:Math.min(100,Math.round(avg/3)), col:'#00e676'},
-        {l:'Officer Online', v: polisi+' officer', pct:Math.round(polisiRatio*100), col:'#4a9eff'},
-      ]
-    };
-  }
-  return mood;
-}
-
-function renderMood(mood) {
-  const card = document.getElementById('moodCard');
-  card.className = 'mood-card ' + mood.key;
-  document.getElementById('moodEmoji').textContent = mood.emoji;
-  document.getElementById('moodTitle').textContent = mood.title;
-  document.getElementById('moodDesc').textContent = mood.desc;
-  document.getElementById('moodFactors').innerHTML = mood.factors.map(f =>
-    `<div class="mf">
-      <div class="mf-label">${f.l}</div>
-      <div class="mf-val">${f.v}</div>
-      <div class="mf-bar"><div class="mf-fill" style="width:${f.pct}%;background:${f.col}"></div></div>
-    </div>`
-  ).join('');
-}
-
-// ── SEEN PLAYERS DB ──
-async function updateSeenDB(players) {
-  const now = new Date();
-  const timeStr = now.toLocaleString('id-ID');
-
-  // Gunakan nama sebagai key (bukan ID karena ID berubah tiap join)
-  // Bersihkan nama jadi key yang aman untuk Firebase (hapus karakter terlarang)
-  function nameToKey(name) {
-    return (name || 'unknown')
-      .toLowerCase()
-      .replace(/[^a-z0-9_]/g, '_')
-      .slice(0, 80);
-  }
-
-  const currentKeys = new Set(players.map(p => nameToKey(p.name)));
-  const updates = {};
-
-  // Tandai semua pemain yang sedang online
-  players.forEach(p => {
-    const key = nameToKey(p.name);
-    const existing = seenDB[key];
-    const nowMs = now.getTime();
-
-    // Pertahankan sessionStartMs dari Firebase jika pemain masih online
-    // Jika offline sebelumnya atau baru pertama → mulai sesi baru
-    let sessionStart;
-    if (existing && existing.sessionStartMs && existing.online) {
-      sessionStart = existing.sessionStartMs; // lanjut sesi yang sama
-    } else {
-      sessionStart = nowMs; // sesi baru (baru join / baru pertama terdeteksi)
-    }
-
-    const entry = {
-      name: p.name || 'Unknown',
-      gang: parseName(p.name).pfx || '',
-      firstSeen: existing ? existing.firstSeen : timeStr,
-      lastSeen: timeStr,
-      online: true,
-      seenCount: existing ? (existing.seenCount || 1) + 1 : 1,
-      sessionStartMs: sessionStart,
-      totalDurMs: existing ? (existing.totalDurMs || 0) : 0,
-      todayDurMs: existing ? (existing.todayDurMs || 0) : 0,
-    };
-    if (existing && existing.lastLeft) entry.lastLeft = existing.lastLeft;
-    seenDB[key] = entry;
-    updates[key] = entry;
-  });
-
-  // Tandai pemain offline + hitung & akumulasi durasi sesi
-  Object.keys(seenDB).forEach(key => {
-    if (!currentKeys.has(key) && seenDB[key].online) {
-      const p = seenDB[key];
-      const sessionMs = p.sessionStartMs ? (now.getTime() - p.sessionStartMs) : 0;
-      const newTotal = (p.totalDurMs || 0) + sessionMs;
-      const newToday = (p.todayDurMs || 0) + sessionMs;
-      seenDB[key] = {
-        ...p,
-        online: false,
-        lastLeft: timeStr,
-        sessionStartMs: null,
-        totalDurMs: newTotal,
-        todayDurMs: newToday,
-      };
-      updates[key] = seenDB[key];
-    }
-  });
-
-  // Simpan ke Firebase
-  if (window._fbUpdate && Object.keys(updates).length > 0) {
-    try {
-      await window._fbUpdate('seenPlayers', updates);
-    } catch(e) {
-      console.warn('Firebase update failed:', e);
-    }
-  }
-
-  updateSeenStats();
-  renderSeen();
-  if(document.getElementById("stalkerDBList"))renderStalkerDB();
-  if(document.getElementById("journeyList")&&activeJourneyKey)showJourney(activeJourneyKey);
-  if(document.getElementById("journeyList")&&document.getElementById("tab-journey").classList.contains("active"))renderJourneyList();
-}
-
-function updateSeenStats() {
-  const all = Object.values(seenDB);
-  const online = all.filter(p => p.online).length;
-  const gangs = new Set(all.map(p => p.gang).filter(Boolean)).size;
-  document.getElementById('seen-total').textContent = all.length.toLocaleString('id-ID');
-  document.getElementById('seen-now').textContent = online.toLocaleString('id-ID');
-  document.getElementById('seen-off').textContent = (all.length - online).toLocaleString('id-ID');
-  document.getElementById('seen-gangs').textContent = gangs.toLocaleString('id-ID');
-}
-
-function setSFilter(f, btn) {
-  seenFilter = f;
-  document.querySelectorAll('.sf').forEach(b => b.classList.remove('act'));
-  btn.classList.add('act');
-  renderSeen();
-}
-
-function renderSeen() {
-  const el = document.getElementById('seenList');
-  const q = (document.getElementById('seenQ').value || '').toLowerCase().trim();
-  let list = Object.values(seenDB);
-
-  // Filter by status
-  if (seenFilter === 'online') list = list.filter(p => p.online);
-  else if (seenFilter === 'offline') list = list.filter(p => !p.online);
-
-  // Filter by name
-  if (q) list = list.filter(p => (p.name||'').toLowerCase().includes(q) || (p.gang||'').toLowerCase().includes(q));
-
-  // Sort sesuai pilihan
-  const seenSortEl = document.getElementById('seenSort');
-  const seenSortVal = seenSortEl ? seenSortEl.value : 'status';
-  const nowMs3 = Date.now();
-
-  function getSessMs(p) {
-    return p.online && p.sessionStartMs ? nowMs3 - p.sessionStartMs : 0;
-  }
-  function getTodayMs(p) {
-    return (p.todayDurMs || 0) + getSessMs(p);
-  }
-  function getTotalMs(p) {
-    return (p.totalDurMs || 0) + getSessMs(p);
-  }
-
-  if (seenSortVal === 'dur_desc') {
-    list.sort((a,b) => getTodayMs(b) - getTodayMs(a));
-  } else if (seenSortVal === 'dur_asc') {
-    list.sort((a,b) => getTodayMs(a) - getTodayMs(b));
-  } else if (seenSortVal === 'total_desc') {
-    list.sort((a,b) => getTotalMs(b) - getTotalMs(a));
-  } else if (seenSortVal === 'first_seen') {
-    list.sort((a,b) => (a.firstSeen||'').localeCompare(b.firstSeen||''));
-  } else if (seenSortVal === 'last_left') {
-    list.sort((a,b) => (b.lastLeft||'').localeCompare(a.lastLeft||''));
-  } else {
-    // Default: online dulu, lalu by durasi
-    list.sort((a,b) => {
-      if (a.online !== b.online) return a.online ? -1 : 1;
-      return getTodayMs(b) - getTodayMs(a);
-    });
-  }
-
-  if (!list.length) {
-    el.innerHTML = '<div class="empty" style="padding:32px"><span>Tidak ada data yang cocok.</span></div>';
-    return;
-  }
-
-  el.innerHTML = list.map(p => {
-    const {pfx, nm} = parseName(p.name);
-    // Hitung durasi hari ini dan total
-    const nowMs2 = Date.now();
-    const sessDurMs = p.online && p.sessionStartMs ? (nowMs2 - p.sessionStartMs) : 0;
-    const todayMs = (p.todayDurMs || 0) + sessDurMs;
-    const totalMs = (p.totalDurMs || 0) + sessDurMs;
-    const todayStr = formatDur(todayMs);
-    const totalStr = formatDur(totalMs);
-    let durDisplay = '—';
-    if (totalMs > 0) {
-      if (todayMs > 0 && totalMs > todayMs) {
-        durDisplay = `<span style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--gold)">${totalStr}</span>
-          <span style="display:inline-flex;align-items:center;gap:3px;background:rgba(255,140,0,.12);border:0.5px solid rgba(255,140,0,.3);border-radius:4px;padding:1px 6px;font-size:10px;color:var(--orange);margin-left:4px;font-family:'Share Tech Mono',monospace;white-space:nowrap">hari ini ${todayStr}</span>`;
-      } else if (todayMs > 0) {
-        durDisplay = `<span style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--gold)">${todayStr}</span>`;
-      } else {
-        durDisplay = `<span style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--text3)">${totalStr}</span>`;
-      }
-    }
-    return `<div class="seen-row" style="grid-template-columns:1fr 130px 130px 220px 100px">
-      <span>
-        ${pfx ? `<div class="ppfx">${pfx}</div>` : ''}
-        <div class="pname" title="${p.name}">${nm || p.name}</div>
-      </span>
-      <span class="seen-time">${p.firstSeen || '—'}</span>
-      <span class="seen-time">${p.online ? '—' : (p.lastLeft || '—')}</span>
-      <span style="text-align:center;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--gold)">${durDisplay}</span>
-      <span style="text-align:center">
-        <span class="seen-badge ${p.online?'on':'off'}">${p.online?'● Online':'○ Offline'}</span>
-      </span>
-    </div>`;
-  }).join('');
-}
-
+// ── FETCH ──
 async function fetchData(){
   for(let i=-1;i<PROXIES.length;i++){
-    try{
-      let r;
-      if(i===-1)r=await fetch(TARGET);
-      else r=await fetch(PROXIES[i](TARGET));
-      if(!r.ok)throw new Error();
-      return JSON.parse(await r.text());
-    }catch(e){if(i===PROXIES.length-1)throw e;}
+    try{let r;if(i===-1)r=await fetch(TARGET);else r=await fetch(PROXIES[i](TARGET));if(!r.ok)throw new Error();return JSON.parse(await r.text());}
+    catch(e){if(i===PROXIES.length-1)throw e;}
   }
 }
 
+// ── LOAD DATA ──
 async function loadData(){
   const btn=document.getElementById('rbtn'),ico=document.getElementById('rico');
   btn.disabled=true;ico.classList.add('spin');
   try{
     const d=await fetchData(),sv=d.Data;
     const players=sv.players||[],maxC=parseInt(sv.sv_maxclients||sv.svMaxclients||2048);
-    const online=sv.clients||players.length,slots=maxC-online;
-    const pct=Math.min(100,Math.round(online/maxC*100));
-    const valid=players.filter(p=>p.ping>0&&p.ping<2000);
-    const avg=valid.length?Math.round(valid.reduce((s,p)=>s+p.ping,0)/valid.length):0;
-    document.getElementById('sdot').className='sdot on';
-    document.getElementById('sstatus').textContent=sv.hostname||'iMe RP';
-    document.getElementById('s1').textContent=online.toLocaleString('id-ID');
-    document.getElementById('s1sub').textContent='dari '+maxC.toLocaleString('id-ID')+' slot ('+pct+'%)';
-    document.getElementById('s2').textContent=maxC.toLocaleString('id-ID');
-    document.getElementById('s3').textContent=slots.toLocaleString('id-ID');
-    document.getElementById('s3sub').textContent=Math.round(slots/maxC*100)+'% slot masih kosong';
-    document.getElementById('s4').textContent=avg+' ms';
-    document.getElementById('sbar').style.width=pct+'%';
-    // Slot kosong bar (sisa %)
-    const slotPct=Math.round(slots/maxC*100);
-    document.getElementById('sbar2').style.width=slotPct+'%';
-    // LSPD & LSSD stats
+    const online=sv.clients||players.length,slots=maxC-online,pct=Math.min(100,Math.round(online/maxC*100));
+    const valid=players.filter(p=>p.ping>0&&p.ping<2000);const avg=valid.length?Math.round(valid.reduce((s,p)=>s+p.ping,0)/valid.length):0;
     const lspdPlayers=players.filter(p=>{const g=(parseName(p.name).pfx||'').toLowerCase();return g==='lspd'||g.startsWith('lspd');});
     const lssdPlayers=players.filter(p=>{const g=(parseName(p.name).pfx||'').toLowerCase();return g==='lssd'||g.startsWith('lssd');});
-    const totalCop=lspdPlayers.length+lssdPlayers.length;
-    document.getElementById('s-lspd').textContent=lspdPlayers.length;
-    document.getElementById('s-lspd-sub').textContent=lspdPlayers.length+' officer aktif';
-    document.getElementById('s-lssd').textContent=lssdPlayers.length;
-    document.getElementById('s-lssd-sub').textContent=lssdPlayers.length+' officer aktif';
-    const maxCop=Math.max(1,Math.max(lspdPlayers.length,lssdPlayers.length));
-    document.getElementById('sbar-lspd').style.width=Math.round(lspdPlayers.length/Math.max(1,totalCop)*100)+'%';
-    document.getElementById('sbar-lssd').style.width=Math.round(lssdPlayers.length/Math.max(1,totalCop)*100)+'%';
-    addHistory(online);
-    allPlayers=players;filter();buildGangStats(players);updateSeenDB(players);
+    const totalCop=Math.max(1,lspdPlayers.length+lssdPlayers.length);
+    document.getElementById('sdot').className='sdot on';document.getElementById('sstatus').textContent=sv.hostname||'iMe RP';
+    document.getElementById('s1').textContent=online.toLocaleString('id-ID');document.getElementById('s1sub').textContent='dari '+maxC.toLocaleString('id-ID')+' slot ('+pct+'%)';
+    document.getElementById('s2').textContent=maxC.toLocaleString('id-ID');
+    document.getElementById('s3').textContent=slots.toLocaleString('id-ID');document.getElementById('s3sub').textContent=Math.round(slots/maxC*100)+'% slot masih kosong';
+    document.getElementById('s4').textContent=avg+' ms';document.getElementById('sbar').style.width=pct+'%';
+    document.getElementById('sbar2').style.width=Math.round(slots/maxC*100)+'%';
+    document.getElementById('s-lspd').textContent=lspdPlayers.length;document.getElementById('s-lspd-sub').textContent=lspdPlayers.length+' officer aktif';
+    document.getElementById('s-lssd').textContent=lssdPlayers.length;document.getElementById('s-lssd-sub').textContent=lssdPlayers.length+' officer aktif';
+    document.getElementById('sbar-lspd').style.width=Math.round(lspdPlayers.length/totalCop*100)+'%';
+    document.getElementById('sbar-lssd').style.width=Math.round(lssdPlayers.length/totalCop*100)+'%';
+    addHistory(online);recordPeakHour(online);
+    allPlayers=players;filter();buildGangStats(players);await updateSeenDB(players);
     document.getElementById('ts').textContent='Update: '+new Date().toLocaleTimeString('id-ID')+' • Auto 30s';
   }catch(e){
-    document.getElementById('sdot').className='sdot off';
-    document.getElementById('sstatus').textContent='Offline / Gagal Konek';
+    document.getElementById('sdot').className='sdot off';document.getElementById('sstatus').textContent='Offline / Gagal Konek';
     const err='<div class="empty"><span>❌ Tidak dapat terhubung ke server.</span></div>';
-    document.getElementById('plist-table').innerHTML=err;
-    document.getElementById('plist-card').innerHTML=err;
+    document.getElementById('plist-table').innerHTML=err;document.getElementById('plist-card').innerHTML=err;
   }
   btn.disabled=false;ico.classList.remove('spin');
 }
 
-// ── GANG STATS ──
-let activeGangFilter = null;
+// Firebase status check
+let fbCheckInterval=setInterval(()=>{if(window._firebaseReady){document.getElementById('fbDot').className='sdot on';document.getElementById('fbStatus').textContent='Firebase ✓';clearInterval(fbCheckInterval);}},500);
+setTimeout(()=>{if(!window._firebaseReady){document.getElementById('fbDot').className='sdot off';document.getElementById('fbStatus').textContent='Firebase ✗';clearInterval(fbCheckInterval);}},8000);
 
-function buildGangStats(players) {
-  const gangMap = {};
-  const solo = [];
-  players.forEach(p => {
-    const {pfx, nm} = parseName(p.name);
-    if (pfx) {
-      const key = pfx.toUpperCase();
-      if (!gangMap[key]) gangMap[key] = [];
-      gangMap[key].push(p);
-    } else {
-      solo.push(p);
-    }
-  });
-  // Sort by count desc
-  const sorted = Object.entries(gangMap).sort((a,b) => b[1].length - a[1].length);
-  const maxCount = sorted.length ? sorted[0][1].length : 1;
-  const grid = document.getElementById('gangGrid');
-  if (!sorted.length) {
-    grid.innerHTML = '<div class="empty" style="grid-column:1/-1;padding:32px"><span>Tidak ada data gang.</span></div>';
-  } else {
-    grid.innerHTML = sorted.map(([name, members]) => {
-      const pct = Math.round(members.length / maxCount * 100);
-      const isActive = activeGangFilter === name;
-      return `<div class="gang-card${isActive?' active-filter':''}" onclick="toggleGangFilter('${name.replace(/'/g,"\'")}',this)">
-        <div class="gang-top">
-          <span class="gang-name">${name}</span>
-          <span class="gang-count">${members.length}</span>
-        </div>
-        <div class="gang-solo">${members.length} anggota online</div>
-        <div class="gang-bar"><div class="gang-bar-fill" style="width:${pct}%"></div></div>
-      </div>`;
-    }).join('');
-  }
-  // Solo players
-  renderSoloList(solo);
-}
-
-function renderSoloList(players) {
-  const el = document.getElementById('soloList');
-  if (!players.length) {
-    el.innerHTML = '<div class="empty" style="padding:20px"><span>Semua pemain memiliki prefix gang.</span></div>';
-    return;
-  }
-  el.innerHTML = players.map(p => {
-    const pi = pingInfo(p.ping);
-    const fn = (p.name||'Unknown').replace(/'/g,"\'");
-    return `<div class="prow">
-      <span class="pid">#${p.id}</span>
-      <span><div class="pname">${p.name||'Unknown'}</div></span>
-      <span class="pping ${pi.cls}"><span class="pingdot ${pi.dot}"></span>${pi.txt} ms</span>
-      <span style="text-align:center"><button class="copy-btn" onclick="copyName('${fn}',this)">COPY</button></span>
-    </div>`;
-  }).join('');
-}
-
-function toggleGangFilter(name, el) {
-  if (activeGangFilter === name) {
-    clearGangFilter();
-    return;
-  }
-  activeGangFilter = name;
-  document.getElementById('clearGangBtn').style.display = 'inline-flex';
-  document.querySelectorAll('.gang-card').forEach(c => c.classList.remove('active-filter'));
-  el.classList.add('active-filter');
-  // Switch to players tab and apply filter
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('tab-players').classList.add('active');
-  document.querySelectorAll('.tab')[0].classList.add('active');
-  document.getElementById('sq').value = name;
-  filter();
-  showToast('Filter gang: ' + name);
-}
-
-function clearGangFilter() {
-  activeGangFilter = null;
-  document.getElementById('clearGangBtn').style.display = 'none';
-  document.getElementById('sq').value = '';
-  document.getElementById('sqid').value = '';
-  document.getElementById('clearSq').style.display='none';
-  document.getElementById('clearSqid').style.display='none';
-  document.getElementById('sq').classList.remove('has-val');
-  document.getElementById('sqid').classList.remove('has-val');
-  filter();
-  buildGangStats(allPlayers);
-}
-
-// ── SHARE LINK ──
-function shareLink() {
-  const q = document.getElementById('sq').value.trim();
-  const qid = document.getElementById('sqid').value.trim();
-  const params = new URLSearchParams();
-  if (q) params.set('gang', q);
-  if (qid) params.set('id', qid);
-  const url = window.location.origin + window.location.pathname + (params.toString() ? '?' + params.toString() : '');
-  navigator.clipboard.writeText(url).then(() => {
-    showToast('Link disalin! Bagikan ke teman kamu.');
-  });
-}
-
-// ── LOAD URL PARAMS ──
-function loadUrlParams() {
-  const params = new URLSearchParams(window.location.search);
-  const gang = params.get('gang');
-  const id = params.get('id');
-  if (gang) { document.getElementById('sq').value = gang; document.getElementById('clearSq').style.display='flex'; document.getElementById('sq').classList.add('has-val'); }
-  if (id) { document.getElementById('sqid').value = id; document.getElementById('clearSqid').style.display='flex'; document.getElementById('sqid').classList.add('has-val'); }
-}
-
-// Check Firebase connection status
-let fbCheckInterval = setInterval(() => {
-  if (window._firebaseReady) {
-    document.getElementById('fbDot').className = 'sdot on';
-    document.getElementById('fbStatus').textContent = 'Firebase ✓';
-    clearInterval(fbCheckInterval);
-  }
-}, 500);
-
-// Timeout if Firebase never connects
-setTimeout(() => {
-  if (!window._firebaseReady) {
-    document.getElementById('fbDot').className = 'sdot off';
-    document.getElementById('fbStatus').textContent = 'Firebase ✗';
-    clearInterval(fbCheckInterval);
-  }
-}, 8000);
-
-// loadData() dipanggil oleh Firebase listener setelah data tersedia
 loadUrlParams();
 setInterval(loadData,30000);
 </script>
